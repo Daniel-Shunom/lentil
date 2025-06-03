@@ -29,10 +29,12 @@ pub fn add_message_to_queue(
   message_queue queue: msg.MessageQueue,
 ) -> msg.MessageQueue {
   let new_message = msg.Message(..nmsg, message_code: msg.QUEUED)
-  let new_queue = list.append(queue.msg_queue, [new_message])
   case list.length(queue.msg_queue) < queue.buffer_size {
-    True -> msg.MessageQueue(..queue, msg_queue: new_queue)
     False -> queue
+    True -> {
+      let new_queue = list.append(queue.msg_queue, [new_message])
+      msg.MessageQueue(..queue, msg_queue: new_queue)
+    }
   }
 }
 
@@ -41,7 +43,7 @@ pub fn add_message_to_bin(
   message_bin bin: msg.MessageQueue,
 ) -> msg.MessageQueue {
   let new_bin = list.prepend(bin.msg_bin, nmsg)
-  case list.length(bin.msg_bin) < 1024 {
+  case list.length(bin.msg_bin) < bin.buffer_size {
     True -> msg.MessageQueue(..bin, msg_bin: new_bin)
     False -> bin
   }
@@ -56,6 +58,19 @@ pub fn pop_message_from_queue(
       let new_msg_queue = msg.MessageQueue(..queue, msg_queue: rest)
       let popped_message = msg.Message(..message, message_code: msg.DEQUED)
       Some(#(popped_message, new_msg_queue))
+    }
+  }
+}
+
+pub fn pop_message_from_bin(
+  message_bin bin: msg.MessageQueue,
+) -> Option(#(msg.Message, msg.MessageQueue)) {
+  case bin.msg_bin {
+    [] -> None
+    [message, ..rest] -> {
+      let new_msg_bin = msg.MessageQueue(..bin, msg_bin: rest)
+      let popped_message = msg.Message(..message, message_code: msg.DEQUED)
+      Some(#(popped_message, new_msg_bin))
     }
   }
 }
@@ -88,6 +103,29 @@ pub fn handle_message_queue(
           msg.MessageQueue(..queue, msg_bin: updated_bin)
         }
         _ -> queue
+      }
+  }
+}
+
+// TODO -> visit later and think more about this
+pub fn handle_message_bin(
+  msg_bin bin: msg.MessageQueue,
+  handler fnc: fn(msg.Message) -> msg.Message,
+) -> msg.MessageQueue {
+  case bin.msg_bin {
+    [] -> bin
+    [head, ..rest] ->
+      case get_message_status(fnc(head)) {
+        msg.TIMEOUT | msg.FAILEDPERM -> msg.MessageQueue(..bin, msg_bin: rest)
+        msg.QUEUED ->
+          case list.length(bin.msg_queue) < bin.buffer_size {
+            False -> bin
+            True -> {
+              let new_queue = list.append(bin.msg_queue, [head])
+              msg.MessageQueue(..bin, msg_queue: new_queue)
+            }
+          }
+        _ -> bin
       }
   }
 }
