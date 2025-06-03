@@ -21,7 +21,7 @@ pub fn create_message(
 }
 
 pub fn create_message_queue(sender_id id: users.UserId) -> msg.MessageQueue {
-  msg.MessageQueue(user_id: id, msg_queue: [], msg_bin: [])
+  msg.MessageQueue(user_id: id, msg_queue: [], msg_bin: [], buffer_size: 1024)
 }
 
 pub fn add_message_to_queue(
@@ -30,7 +30,21 @@ pub fn add_message_to_queue(
 ) -> msg.MessageQueue {
   let new_message = msg.Message(..nmsg, message_code: msg.QUEUED)
   let new_queue = list.append(queue.msg_queue, [new_message])
-  msg.MessageQueue(..queue, msg_queue: new_queue)
+  case list.length(queue.msg_queue) < queue.buffer_size {
+    True -> msg.MessageQueue(..queue, msg_queue: new_queue)
+    False -> queue
+  }
+}
+
+pub fn add_message_to_bin(
+  new_message nmsg: msg.Message,
+  message_bin bin: msg.MessageQueue,
+) -> msg.MessageQueue {
+  let new_bin = list.prepend(bin.msg_bin, nmsg)
+  case list.length(bin.msg_bin) < 1024 {
+    True -> msg.MessageQueue(..bin, msg_bin: new_bin)
+    False -> bin
+  }
 }
 
 pub fn pop_message_from_queue(
