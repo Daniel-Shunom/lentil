@@ -1,4 +1,4 @@
-import global_types/gtypes.{type TimeStamp}
+import global/gtypes.{type TimeStamp}
 import users/types/users.{type User}
 
 pub const small_cap = 128
@@ -7,25 +7,23 @@ pub const medium_cap = 256
 
 pub const large_cap = 512
 
-pub fn set_capacity(capacity: RoomCapacity) -> Int {
-  case capacity {
-    SMALL -> small_cap
-    MEDIUM -> medium_cap
-    LARGE -> large_cap
-  }
-}
-
 pub type CrashReason {
   SERVERERROR
   SERVERDELAY
 }
 
+pub type RoomCreateError {
+  EXCEEDSCapacity
+  NAMETaken
+  CREATEFAIL
+}
+
 pub type UpdateReason {
-  ADDUser
-  REMOVEUser
-  CHANGEOwner
-  CHANGECapacity
-  CHANGEName
+  ADDRRoomMember
+  REMOVERoomMember
+  CHANGERoomOwner
+  CHANGERoomCapacity
+  CHANGERoomName
 }
 
 pub type RoomCapacity {
@@ -39,6 +37,7 @@ pub type RoomId {
 }
 
 pub type RoomStatus {
+  PENDING
   CREATED(time: TimeStamp)
   DELETED(time: TimeStamp)
   UPDATED(time: TimeStamp, reason: UpdateReason)
@@ -47,10 +46,10 @@ pub type RoomStatus {
 
 pub type Room {
   Room(
-    owner: User,
-    members: List(User),
-    status: RoomStatus,
-    capacity: RoomCapacity,
+    room_owner: User,
+    room_members: List(User),
+    room_status: RoomStatus,
+    room_capacity: Int,
     room_id: RoomId,
     room_name: String,
   )
