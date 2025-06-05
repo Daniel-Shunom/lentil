@@ -28,8 +28,8 @@ pub type Gender {
 pub type User {
   User(
     name: Name,
-    username: UserName,
     user_id: UserId,
+    username: UserName,
     user_auth: Bool,
     user_dob: DOB,
     user_gender: Gender,
