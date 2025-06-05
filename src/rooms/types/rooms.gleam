@@ -1,17 +1,17 @@
 import global_types/gtypes.{type TimeStamp}
 import users/types/users.{type User}
 
-pub const small = 128
+pub const small_cap = 128
 
-pub const medium = 256
+pub const medium_cap = 256
 
-pub const large = 512
+pub const large_cap = 512
 
 pub fn set_capacity(capacity: RoomCapacity) -> Int {
   case capacity {
-    SMALL -> small
-    MEDIUM -> medium
-    LARGE -> large
+    SMALL -> small_cap
+    MEDIUM -> medium_cap
+    LARGE -> large_cap
   }
 }
 
