@@ -43,4 +43,5 @@ glisten = { version = ">= 7.0.1 and < 8.0.0" }
 lustre = { version = ">= 5.1.0 and < 6.0.0" }
 mist = { version = ">= 4.0.7 and < 5.0.0" }
 prng = { version = ">= 4.0.1 and < 5.0.0" }
+simplifile = { version = ">= 2.2.1 and < 3.0.0" }
 wisp = { version = ">= 1.7.0 and < 2.0.0" }
