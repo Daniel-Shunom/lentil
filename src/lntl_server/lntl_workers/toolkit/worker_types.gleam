@@ -1,56 +1,59 @@
-import gleam/erlang/process.{type Pid, type Subject}
-import gleam/option.{type Option}
-import gleam/set.{type Set}
-import gleam/time/duration.{type Duration}
-import messages/types/msg.{type Message, type MessageQueue}
-import rooms/types/rooms.{type Room, type RoomCapacity, type RoomId}
-import users/types/users.{type User}
+import gleam/erlang/process
+import gleam/set
+import gleam/time/duration
+
+import messages/types/msg
+import rooms/types/rooms
+import users/types/users
+
+pub type SESSIONTYPE {
+  ROOMSESSION
+  USERSESSION
+}
 
 pub type RoomSession {
   RoomSession(
-    room_data: Room,
+    room_data: rooms.Room,
     session_id: String,
-    retry_bin: List(Message),
-    connection_registry: Set(Pid),
+    retry_bin: List(msg.Message),
+    connection_registry: set.Set(process.Pid),
   )
 }
 
 pub type UserSession {
   UserSession(
     session_id: String,
-    user: User,
-    queue: MessageQueue,
-    member_rooms: List(RoomId),
-    owned_rooms: List(RoomId),
-    task_inbox: Subject(SessionOperationMessage),
+    user: users.User,
+    queue: msg.MessageQueue,
+    member_rooms: List(rooms.RoomId),
+    owned_rooms: List(rooms.RoomId),
+    task_inbox: process.Subject(SessionOperationMessage),
   )
 }
 
 // This type indicates the type of messages a room session
 // can have.
 pub type RoomSessionMessage {
-  DELETEROOM(User, Subject(SessionOperationMessage))
-  SENDMESSAGE(Message, Subject(SessionOperationMessage))
-  CONNECT(User, Pid, Subject(SessionOperationMessage))
-  DISCONNECT(User, Pid, Subject(SessionOperationMessage))
-  // when the user want's to just leave the room themselves.
-  LEAVE(User, Pid, Subject(SessionOperationMessage))
-  // when the user want's to join the room and become a member.
-  JOIN(User, Pid, Subject(SessionOperationMessage))
-
-  // these variants can only be used by the owner.
-  // the handler will check that the person sending
-  // this message is the owner
-  UPDATENAME(User, String, Subject(SessionOperationMessage))
-  UPDATECAPACITY(User, RoomCapacity, Subject(SessionOperationMessage))
-  ANNOUNCE(User, String, Subject(SessionOperationMessage))
-  REMOVEMEMBER(User, Subject(SessionOperationMessage))
-  MEMBERTIMEOUT(User, Duration, Subject(SessionOperationMessage))
-
-  // this will be used in case of some malicious
-  // activity that can only be cleared by shutting
-  // down the process.
-  PING(Pid)
+  DELETEROOM(users.User, process.Subject(SessionOperationMessage))
+  SENDMESSAGE(msg.Message, process.Subject(SessionOperationMessage))
+  CONNECT(users.User, process.Pid, process.Subject(SessionOperationMessage))
+  DISCONNECT(users.User, process.Pid, process.Subject(SessionOperationMessage))
+  LEAVE(users.User, process.Pid, process.Subject(SessionOperationMessage))
+  JOIN(users.User, process.Pid, process.Subject(SessionOperationMessage))
+  UPDATENAME(users.User, String, process.Subject(SessionOperationMessage))
+  UPDATECAPACITY(
+    users.User,
+    rooms.RoomCapacity,
+    process.Subject(SessionOperationMessage),
+  )
+  ANNOUNCE(users.User, String, process.Subject(SessionOperationMessage))
+  REMOVEMEMBER(users.User, process.Subject(SessionOperationMessage))
+  MEMBERTIMEOUT(
+    users.User,
+    duration.Duration,
+    process.Subject(SessionOperationMessage),
+  )
+  PING(process.Pid)
   SHUTDOWN
 }
 
@@ -58,23 +61,23 @@ pub type UserSessionMessage {
   // to create a new room
   CREATEROOM
   // to delete an owned room
-  DELETE(RoomId)
+  DELETE(rooms.RoomId)
   // to join an existing room
-  JOINROOM(RoomId)
+  JOINROOM(rooms.RoomId)
   // to leave an existing room
-  LEAVEROOM(RoomId)
+  LEAVEROOM(rooms.RoomId)
   // to connect to a room session
-  ROOMCONNECT(RoomId)
-  // to disconenct from a room session
-  ROOMDISCONNECT(RoomId)
+  ROOMCONNECT(rooms.RoomId)
+  // to disconnect from a room session
+  ROOMDISCONNECT(rooms.RoomId)
   // to send a message while in a room session
-  MESSAGEROOM(Message, RoomId)
+  MESSAGEROOM(msg.Message, rooms.RoomId)
   // to make an announcement to a room you own
-  ROOMANOUNCEMENT(Message, RoomId)
-  // to remove a member from the owners room
-  KICKOFFMEMBER(User, RoomId)
+  ROOMANNOUNCEMENT(msg.Message, rooms.RoomId)
+  // to remove a member from the owner’s room
+  KICKOFFMEMBER(users.User, rooms.RoomId)
   // to timeout a member from sending messages
-  TIMEOUTMEMBER(User, RoomId, Duration)
+  TIMEOUTMEMBER(users.User, rooms.RoomId, duration.Duration)
 }
 
 pub type SessionOperationMessage {
