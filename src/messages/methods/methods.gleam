@@ -8,7 +8,7 @@ pub fn create_message(
   message_id msid: String,
   message_content mscontent: String,
   message_sender_id ms_sender_id: users.UserId,
-  message_timestamp stmp: gtypes.TimeStamp,
+  message_timestamp stmp: gtypes.LentilTimeStamp,
   message_code code: msg.MessageStatus,
 ) -> msg.Message {
   msg.Message(

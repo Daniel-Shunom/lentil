@@ -21,7 +21,7 @@ pub type Message {
     message_id: String,
     message_content: String,
     message_user_id: users.UserId,
-    message_timestamp: gtypes.TimeStamp,
+    message_timestamp: gtypes.LentilTimeStamp,
     message_code: MessageStatus,
   )
 }

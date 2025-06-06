@@ -1,4 +1,4 @@
-import global/gtypes.{type TimeStamp}
+import global/gtypes.{type LentilTimeStamp}
 import users/types/users.{type User}
 
 pub const small_cap = 128
@@ -33,15 +33,15 @@ pub type RoomCapacity {
 }
 
 pub type RoomId {
-  RoomId(id: String, created: TimeStamp)
+  RoomId(id: String, created: LentilTimeStamp)
 }
 
 pub type RoomStatus {
   PENDING
-  CREATED(time: TimeStamp)
-  DELETED(time: TimeStamp)
-  UPDATED(time: TimeStamp, reason: UpdateReason)
-  CRASHED(time: TimeStamp, reason: CrashReason)
+  CREATED(time: LentilTimeStamp)
+  DELETED(time: LentilTimeStamp)
+  UPDATED(time: LentilTimeStamp, reason: UpdateReason)
+  CRASHED(time: LentilTimeStamp, reason: CrashReason)
 }
 
 pub type Room {
