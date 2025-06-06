@@ -1,4 +1,5 @@
-import gleam/erlang/process.{type Pid}
+import gleam/erlang/process.{type Pid, type Subject}
+import gleam/option.{type Option}
 import gleam/set.{type Set}
 import gleam/time/duration.{type Duration}
 import messages/types/msg.{type Message, type MessageQueue}
@@ -21,29 +22,30 @@ pub type UserSession {
     queue: MessageQueue,
     member_rooms: List(RoomId),
     owned_rooms: List(RoomId),
+    task_inbox: Subject(SessionOperationMessage),
   )
 }
 
 // This type indicates the type of messages a room session
 // can have.
 pub type RoomSessionMessage {
-  DELETEROOM(User)
-  SENDMESSAGE(Message)
-  CONNECT(User, Pid)
-  DISCONNECT(User, Pid)
+  DELETEROOM(User, Subject(SessionOperationMessage))
+  SENDMESSAGE(Message, Subject(SessionOperationMessage))
+  CONNECT(User, Pid, Subject(SessionOperationMessage))
+  DISCONNECT(User, Pid, Subject(SessionOperationMessage))
   // when the user want's to just leave the room themselves.
-  LEAVE(User, Pid)
+  LEAVE(User, Pid, Subject(SessionOperationMessage))
   // when the user want's to join the room and become a member.
-  JOIN(User, Pid)
+  JOIN(User, Pid, Subject(SessionOperationMessage))
 
   // these variants can only be used by the owner.
   // the handler will check that the person sending
   // this message is the owner
-  UPDATENAME(User, String)
-  UPDATECAPACITY(User, RoomCapacity)
-  ANNOUNCE(User, String)
-  REMOVEMEMBER(User)
-  MEMBERTIMEOUT(User, Duration)
+  UPDATENAME(User, String, Subject(SessionOperationMessage))
+  UPDATECAPACITY(User, RoomCapacity, Subject(SessionOperationMessage))
+  ANNOUNCE(User, String, Subject(SessionOperationMessage))
+  REMOVEMEMBER(User, Subject(SessionOperationMessage))
+  MEMBERTIMEOUT(User, Duration, Subject(SessionOperationMessage))
 
   // this will be used in case of some malicious
   // activity that can only be cleared by shutting
@@ -76,8 +78,6 @@ pub type UserSessionMessage {
 }
 
 pub type SessionOperationMessage {
-  MESSAGESENDSUCCESS(Message)
-  SUCCESS(Message)
+  SUCCESS(String)
   FAILURE(String)
-  UNDEFINED
 }
