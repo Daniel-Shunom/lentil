@@ -1,5 +1,8 @@
+import gleam/int
 import gleam/list
 import global/functions.{get_timestamp}
+import prng/random
+import prng/seed
 import rooms/types/rooms
 import users/types/users
 
@@ -135,9 +138,24 @@ fn set_capacity(capacity: rooms.RoomCapacity) -> Int {
 }
 
 fn generate_room_id() -> String {
-  "lntl-" <> ""
+  let str = random.fixed_size_string(32)
+  let num = random.int(0, 100_000)
+  let secure_prefix =
+    random.int(0, 13)
+    |> random.random_sample()
+    |> seed.new()
+    |> random.sample(num, _)
+    |> int.to_string()
+
+  let secure_id =
+    random.int(0, 9)
+    |> random.random_sample()
+    |> seed.new()
+    |> random.sample(str, _)
+
+  "lntl-rm-" <> secure_prefix <> secure_id
 }
 
 fn check_name(name: String) -> Bool {
-  todo
+  todo as "Some database check or something"
 }
