@@ -1,6 +1,8 @@
 import gleam/result
 import gleam/string_tree
-import lntl_server/pages/a_def.{default_page}
+import lntl_server/pages/a_def.{
+  bad_request, default_page, not_found, server_error, too_large,
+}
 import simplifile
 import wisp
 
@@ -13,10 +15,10 @@ pub type ERRORS {
 
 fn get_path(error: ERRORS) -> String {
   case error {
-    SERVERERROR -> "src/lntl_server/pages/server_error.html"
-    BADREQUEST -> "src/lntl_server/pages/bad_request.html"
-    NOTFOUND -> "src/lntl_server/pages/not_found.html"
-    TOOLARGE -> "src/lntl_server/pages/too_large.html"
+    SERVERERROR -> server_error
+    BADREQUEST -> bad_request
+    NOTFOUND -> not_found
+    TOOLARGE -> too_large
   }
 }
 
