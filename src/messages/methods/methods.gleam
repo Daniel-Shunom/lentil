@@ -1,6 +1,6 @@
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import global_types/gtypes
+import global/gtypes
 import messages/types/msg
 import users/types/users
 

@@ -1,4 +1,4 @@
-import global_types/gtypes
+import global/gtypes
 import users/types/users
 
 pub type MessageStatus {
