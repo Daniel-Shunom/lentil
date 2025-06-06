@@ -129,7 +129,7 @@ pub fn remove_room_member(room: rooms.Room, user: users.User) -> rooms.Room {
   )
 }
 
-fn set_capacity(capacity: rooms.RoomCapacity) -> Int {
+pub fn set_capacity(capacity: rooms.RoomCapacity) -> Int {
   case capacity {
     rooms.SMALL -> rooms.small_cap
     rooms.MEDIUM -> rooms.medium_cap
