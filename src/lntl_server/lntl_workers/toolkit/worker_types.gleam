@@ -1,7 +1,6 @@
+import gleam/dict
 import gleam/erlang/process
 import gleam/set
-import gleam/time/duration
-
 import messages/types/msg
 import rooms/types/rooms
 import users/types/users
@@ -25,9 +24,9 @@ pub type UserSession {
     session_id: String,
     user: users.User,
     queue: msg.MessageQueue,
-    member_rooms: List(rooms.RoomId),
-    owned_rooms: List(rooms.RoomId),
+    member_rooms: dict.Dict(rooms.RoomId, process.Subject(RoomSessionMessage)),
     task_inbox: process.Subject(SessionOperationMessage),
+    owned_rooms: List(rooms.RoomId),
   )
 }
 
@@ -62,30 +61,13 @@ pub type RoomSessionMessage {
   SHUTDOWN
 }
 
-pub type UserSessionMessage {
-  // to create a new room
-  CREATEROOM
-  // to delete an owned room
-  DELETE(rooms.RoomId)
-  // to join an existing room
-  JOINROOM(rooms.RoomId)
-  // to leave an existing room
-  LEAVEROOM(rooms.RoomId)
-  // to connect to a room session
-  ROOMCONNECT(rooms.RoomId)
-  // to disconnect from a room session
-  ROOMDISCONNECT(rooms.RoomId)
-  // to send a message while in a room session
-  MESSAGEROOM(msg.Message, rooms.RoomId)
-  // to make an announcement to a room you own
-  ROOMANNOUNCEMENT(msg.Message, rooms.RoomId)
-  // to remove a member from the owner’s room
-  KICKOFFMEMBER(users.User, rooms.RoomId)
-  // to timeout a member from sending messages
-  TIMEOUTMEMBER(users.User, rooms.RoomId, duration.Duration)
-}
-
 pub type SessionOperationMessage {
+  /// Register that we've got a live room process we can talk to
+  ADDROOM(room_id: rooms.RoomId, room_subj: process.Subject(RoomSessionMessage))
+
+  /// Send a chat into a room you’ve joined
+  SENDTOROOM(room_id: rooms.RoomId, text: msg.Message)
+  MESSAGEDELIVERED(msg.Message)
   SUCCESS(String)
   FAILURE(String)
 }

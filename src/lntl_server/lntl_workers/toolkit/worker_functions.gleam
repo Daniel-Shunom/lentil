@@ -1,3 +1,4 @@
+import gleam/dict
 import gleam/erlang/process
 import gleam/int
 import gleam/list
@@ -5,6 +6,7 @@ import gleam/otp/actor
 import gleam/set
 import lntl_server/lntl_workers/toolkit/constants as m
 import lntl_server/lntl_workers/toolkit/worker_types as wt
+import messages/methods/methods as mt
 import messages/types/msg
 import prng/random
 import prng/seed
@@ -18,6 +20,15 @@ pub fn create_room_process(
   name: String,
 ) -> Result(process.Subject(wt.RoomSessionMessage), rooms.RoomCreateError) {
   create_room_process_helper(owner, cap, name)
+}
+
+pub fn create_user_process(
+  user: users.User,
+) -> Result(
+  process.Subject(wt.SessionOperationMessage),
+  users.USERCREATIONERROR,
+) {
+  create_user_process_helper(user)
 }
 
 fn room_session_handler(
@@ -46,7 +57,7 @@ fn room_session_handler(
       // TODO -> PLEASE FIX THIS!!
       let new_bin = list.prepend(session_state.retry_bin, new_message)
       let new_state = wt.RoomSession(..session_state, retry_bin: new_bin)
-      wt.FAILURE(m.room_msg_failure)
+      wt.MESSAGEDELIVERED(message)
       |> actor.send(client, _)
       actor.continue(new_state)
     }
@@ -80,7 +91,7 @@ fn room_session_handler(
           actor.continue(new_state)
         }
         False -> {
-          wt.FAILURE(m.client_room_connect_failure)
+          wt.FAILURE(m.client_room_disconnect_failure)
           |> actor.send(client, _)
           actor.continue(session_state)
         }
@@ -220,6 +231,67 @@ fn room_session_handler(
   }
 }
 
+fn user_session_handler(
+  session_message: wt.SessionOperationMessage,
+  session_state: wt.UserSession,
+) -> actor.Next(wt.SessionOperationMessage, wt.UserSession) {
+  case session_message {
+    wt.SUCCESS(_) -> actor.continue(session_state)
+    wt.MESSAGEDELIVERED(_) -> {
+      case session_state.queue.msg_queue {
+        [] -> actor.continue(session_state)
+        [_, ..rest] -> {
+          let nq = msg.MessageQueue(..session_state.queue, msg_queue: rest)
+          let new_state = wt.UserSession(..session_state, queue: nq)
+          actor.continue(new_state)
+        }
+      }
+
+      actor.continue(session_state)
+    }
+    wt.SENDTOROOM(id, message) -> {
+      case dict.get(session_state.member_rooms, id) {
+        Error(_) -> {
+          wt.FAILURE("Not room member")
+          |> actor.send(session_state.task_inbox, _)
+          actor.continue(session_state)
+        }
+        Ok(room_mailbox) -> {
+          let new_message = msg.Message(..message, message_code: msg.QUEUED)
+          let q =
+            session_state.queue.msg_queue
+            |> list.append([new_message])
+          let new_msg_queue =
+            msg.MessageQueue(..session_state.queue, msg_queue: q)
+          let new_session =
+            wt.UserSession(..session_state, queue: new_msg_queue)
+          wt.SENDMESSAGE(new_message, session_state.task_inbox)
+          |> actor.send(room_mailbox, _)
+          actor.continue(new_session)
+        }
+      }
+    }
+    wt.ADDROOM(id, mailbox) -> {
+      let new_rooms =
+        session_state.member_rooms
+        |> dict.insert(id, mailbox)
+      let new_state = wt.UserSession(..session_state, member_rooms: new_rooms)
+      actor.continue(new_state)
+    }
+    wt.FAILURE(message) -> {
+      case message {
+        // TODO -> please flesh out all error cases. 
+        "" -> {
+          actor.continue(session_state)
+        }
+        _ -> {
+          actor.continue(session_state)
+        }
+      }
+    }
+  }
+}
+
 @external(erlang, "sanitizer", "sanitize_text")
 fn clean(msg: String) -> String
 
@@ -250,6 +322,42 @@ fn create_room_process_helper(
       Ok(new_process)
     }
   }
+}
+
+fn create_user_process_helper(
+  user: users.User,
+) -> Result(
+  process.Subject(wt.SessionOperationMessage),
+  users.USERCREATIONERROR,
+) {
+  let new_session_id = generate_session_id(wt.USERSESSION)
+  let owned = get_owned_rooms(user)
+  let inbox = process.new_subject()
+  let member =
+    get_member_rooms(user)
+    |> list.map(fn(id) { #(id, process.new_subject()) })
+    |> dict.from_list()
+  let new_queue = mt.create_message_queue()
+  let new_user_session =
+    wt.UserSession(
+      session_id: new_session_id,
+      user: user,
+      queue: new_queue,
+      member_rooms: member,
+      task_inbox: inbox,
+      owned_rooms: owned,
+    )
+  let assert Ok(new_process) =
+    actor.start(new_user_session, user_session_handler)
+  Ok(new_process)
+}
+
+fn get_owned_rooms(_user: users.User) -> List(rooms.RoomId) {
+  todo as "db call to get list of id's"
+}
+
+fn get_member_rooms(_user: users.User) -> List(rooms.RoomId) {
+  todo as "db call to get list of id's"
 }
 
 fn generate_session_id(id_type: wt.SESSIONTYPE) -> String {
