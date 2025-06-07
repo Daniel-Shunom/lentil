@@ -36,6 +36,10 @@ pub type RoomId {
   RoomId(id: String, created: LentilTimeStamp)
 }
 
+pub type RoomAnouncement {
+  RoomAnouncement(message: String, time: LentilTimeStamp)
+}
+
 pub type RoomStatus {
   PENDING
   CREATED(time: LentilTimeStamp)
@@ -52,5 +56,6 @@ pub type Room {
     room_capacity: Int,
     room_id: RoomId,
     room_name: String,
+    room_announcements: List(RoomAnouncement),
   )
 }
