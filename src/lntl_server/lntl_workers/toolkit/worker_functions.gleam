@@ -25,7 +25,7 @@ pub fn create_room_process(
 pub fn create_user_process(
   user: users.User,
 ) -> Result(
-  process.Subject(wt.SessionOperationMessage),
+  #(process.Subject(wt.SessionOperationMessage), String),
   users.USERCREATIONERROR,
 ) {
   create_user_process_helper(user)
@@ -236,6 +236,7 @@ fn user_session_handler(
   session_state: wt.UserSession,
 ) -> actor.Next(wt.SessionOperationMessage, wt.UserSession) {
   case session_message {
+    wt.CLOSESESSION -> actor.Stop(process.Normal)
     wt.SUCCESS(_) -> actor.continue(session_state)
     wt.MESSAGEDELIVERED(_) -> {
       case session_state.queue.msg_queue {
@@ -327,7 +328,7 @@ fn create_room_process_helper(
 fn create_user_process_helper(
   user: users.User,
 ) -> Result(
-  process.Subject(wt.SessionOperationMessage),
+  #(process.Subject(wt.SessionOperationMessage), String),
   users.USERCREATIONERROR,
 ) {
   let new_session_id = generate_session_id(wt.USERSESSION)
@@ -349,7 +350,8 @@ fn create_user_process_helper(
     )
   let assert Ok(new_process) =
     actor.start(new_user_session, user_session_handler)
-  Ok(new_process)
+  #(new_process, new_session_id)
+  |> Ok()
 }
 
 fn get_owned_rooms(_user: users.User) -> List(rooms.RoomId) {
