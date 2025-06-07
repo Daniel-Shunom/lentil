@@ -36,3 +36,5 @@ pub type User {
     user_pronouns: Pronouns,
   )
 }
+
+pub type USERCREATIONERROR
