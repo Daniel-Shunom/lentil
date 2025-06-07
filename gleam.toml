@@ -24,6 +24,7 @@ glisten = ">= 7.0.1 and < 8.0.0"
 prng = ">= 4.0.1 and < 5.0.0"
 gleam_time = ">= 1.2.0 and < 2.0.0"
 simplifile = ">= 2.2.1 and < 3.0.0"
+stratus = ">= 0.9.7 and < 1.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
