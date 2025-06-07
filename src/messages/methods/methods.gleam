@@ -20,8 +20,8 @@ pub fn create_message(
   )
 }
 
-pub fn create_message_queue(sender_id id: users.UserId) -> msg.MessageQueue {
-  msg.MessageQueue(user_id: id, msg_queue: [], msg_bin: [], buffer_size: 1024)
+pub fn create_message_queue() -> msg.MessageQueue {
+  msg.MessageQueue(msg_queue: [], msg_bin: [], buffer_size: 1024)
 }
 
 pub fn add_message_to_queue(

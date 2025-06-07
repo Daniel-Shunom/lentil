@@ -28,7 +28,6 @@ pub type Message {
 
 pub type MessageQueue {
   MessageQueue(
-    user_id: users.UserId,
     msg_queue: List(Message),
     msg_bin: List(Message),
     buffer_size: Int,
