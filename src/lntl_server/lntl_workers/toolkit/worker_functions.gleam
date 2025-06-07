@@ -212,10 +212,10 @@ pub fn room_session_handler(
   }
 }
 
-@external(erlang, "lntl_server/lntl_workers/toolkit/sanitizer/sanitizer", "sanitize_text")
-fn clean(msg: String) -> String
+@external(erlang, "sanitizer", "sanitize_text")
+pub fn clean(msg: String) -> String
 
-fn sanitize_message(msg: msg.Message) -> msg.Message {
+pub fn sanitize_message(msg: msg.Message) -> msg.Message {
   let nc = clean(msg.message_content)
   msg.Message(..msg, message_content: nc)
 }
