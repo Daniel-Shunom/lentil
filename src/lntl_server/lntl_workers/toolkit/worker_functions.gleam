@@ -12,7 +12,15 @@ import rooms/methods/methods
 import rooms/types/rooms
 import users/types/users
 
-pub fn room_session_handler(
+pub fn create_room_process(
+  owner: users.User,
+  cap: rooms.RoomCapacity,
+  name: String,
+) -> Result(process.Subject(wt.RoomSessionMessage), rooms.RoomCreateError) {
+  create_room_process_helper(owner, cap, name)
+}
+
+fn room_session_handler(
   session_message: wt.RoomSessionMessage,
   session_state: wt.RoomSession,
 ) -> actor.Next(wt.RoomSessionMessage, wt.RoomSession) {
@@ -213,14 +221,14 @@ pub fn room_session_handler(
 }
 
 @external(erlang, "sanitizer", "sanitize_text")
-pub fn clean(msg: String) -> String
+fn clean(msg: String) -> String
 
-pub fn sanitize_message(msg: msg.Message) -> msg.Message {
+fn sanitize_message(msg: msg.Message) -> msg.Message {
   let nc = clean(msg.message_content)
   msg.Message(..msg, message_content: nc)
 }
 
-pub fn create_room_process(
+fn create_room_process_helper(
   room_owner owner: users.User,
   capacity cap: rooms.RoomCapacity,
   room_name name: String,
