@@ -34,21 +34,13 @@ pub fn room_session_handler(
       }
     }
     wt.SENDMESSAGE(message, client) -> {
-      case validate_message(message) {
-        True -> {
-          wt.SUCCESS(m.room_msg_success)
-          |> actor.send(client, _)
-          actor.continue(session_state)
-        }
-        False -> {
-          let new_message = msg.Message(..message, message_code: msg.FAILEDTEMP)
-          let new_bin = list.prepend(session_state.retry_bin, new_message)
-          let new_state = wt.RoomSession(..session_state, retry_bin: new_bin)
-          wt.FAILURE(m.room_msg_failure)
-          |> actor.send(client, _)
-          actor.continue(new_state)
-        }
-      }
+      let new_message = sanitize_message(message)
+      // TODO -> PLEASE FIX THIS!!
+      let new_bin = list.prepend(session_state.retry_bin, new_message)
+      let new_state = wt.RoomSession(..session_state, retry_bin: new_bin)
+      wt.FAILURE(m.room_msg_failure)
+      |> actor.send(client, _)
+      actor.continue(new_state)
     }
     wt.CONNECT(user, pid, client) -> {
       let search = fn(x) { x != user }
@@ -220,8 +212,12 @@ pub fn room_session_handler(
   }
 }
 
-fn validate_message(msg: msg.Message) -> Bool {
-  todo as "will validate the message so it is not spam/obscene"
+@external(erlang, "lntl_server/lntl_workers/toolkit/sanitizer/sanitizer", "sanitize_text")
+fn clean(msg: String) -> String
+
+fn sanitize_message(msg: msg.Message) -> msg.Message {
+  let nc = clean(msg.message_content)
+  msg.Message(..msg, message_content: nc)
 }
 
 pub fn create_room_process(
