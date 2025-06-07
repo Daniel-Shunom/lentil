@@ -46,14 +46,19 @@ pub type RoomSessionMessage {
     rooms.RoomCapacity,
     process.Subject(SessionOperationMessage),
   )
-  ANNOUNCE(users.User, String, process.Subject(SessionOperationMessage))
-  REMOVEMEMBER(users.User, process.Subject(SessionOperationMessage))
-  MEMBERTIMEOUT(
+  ANNOUNCE(
     users.User,
-    duration.Duration,
+    rooms.RoomAnouncement,
     process.Subject(SessionOperationMessage),
   )
-  PING(process.Pid)
+  REMOVEMEMBER(users.User, process.Subject(SessionOperationMessage))
+  // TODO -> fleshout this functionality later
+  //MEMBERTIMEOUT(
+  //  users.User,
+  //  duration.Duration,
+  //  process.Subject(SessionOperationMessage),
+  //)
+  PING(process.Pid, process.Subject(SessionOperationMessage))
   SHUTDOWN
 }
 
