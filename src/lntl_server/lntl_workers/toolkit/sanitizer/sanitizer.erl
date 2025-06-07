@@ -16,7 +16,10 @@ sanitize_text(Text) when is_list(Text) ->
     Words     = [ string:trim(L) || L <- Lines, L =/= "" ],
 
     BaseConfig = feck:configure([{blacklist, Words}]),
-    FullConfig = feck:configure([{replacement, stars}], BaseConfig),
+    % options are "garbled", "vowels", "stars" and others
+    % we're just gonna use these options for now cause
+    % they're better :)
+    FullConfig = feck:configure([{replacement, vowels}], BaseConfig),
 
     SanitizedList = feck:sanitize(Text, FullConfig),
 
