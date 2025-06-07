@@ -261,6 +261,7 @@ fn generate_session_id(id_type: wt.SESSIONTYPE) -> String {
     |> random.sample(str, _)
 
   case id_type {
+    // TODO -> improve this later pls
     wt.ROOMSESSION -> "lntl-rm-" <> secure_prefix <> secure_id
     wt.USERSESSION -> "lntl-user-" <> secure_prefix <> secure_id
   }
