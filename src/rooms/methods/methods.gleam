@@ -22,14 +22,20 @@ pub fn create_room(
         False -> {
           let create_time = get_timestamp()
           // TODO -> add verification logic to ensure room creation.
-          Ok(rooms.Room(
-            room_owner: owner,
-            room_members: [owner, ..members],
-            room_status: rooms.CREATED(time: create_time),
-            room_capacity: set_capacity(capacity),
-            room_id: rooms.RoomId(id: generate_room_id(), created: create_time),
-            room_name: name,
-          ))
+          Ok(
+            rooms.Room(
+              room_owner: owner,
+              room_members: [owner, ..members],
+              room_status: rooms.CREATED(time: create_time),
+              room_capacity: set_capacity(capacity),
+              room_id: rooms.RoomId(
+                id: generate_room_id(),
+                created: create_time,
+              ),
+              room_name: name,
+              room_announcements: [],
+            ),
+          )
         }
       }
     }
