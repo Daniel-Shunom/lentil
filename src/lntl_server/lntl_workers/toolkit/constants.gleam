@@ -38,6 +38,10 @@ pub const room_member_timeout_success = "Member timeout enforced successfully."
 
 pub const room_member_timeout_failure = "Failed to enforce member timeout."
 
+pub const room_ping_success = "Room ping sucessfull"
+
+pub const room_ping_failure = "Failed to ping room"
+
 // Client‐side constants:
 
 pub const client_create_room_success = "Room created successfully."
