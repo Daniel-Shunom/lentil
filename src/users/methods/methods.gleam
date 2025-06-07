@@ -1,7 +1,9 @@
+import gleam/int
+import prng/random
+import prng/seed
 import users/types/users
 
 pub fn create_user(
-  users_id id: String,
   first_name name_f: String,
   last_name name_l: String,
   username uname: String,
@@ -13,6 +15,7 @@ pub fn create_user(
   dob_month year: Int,
   user_gender gender: users.Gender,
 ) -> users.User {
+  let id = generate_user_id()
   users.User(
     name: users.Name(name_f, name_l),
     username: users.UserName(uname),
@@ -76,4 +79,23 @@ pub fn update_user_pronouns(
   user user: users.User,
 ) -> users.User {
   users.User(..user, user_pronouns: users.Pronouns(nsp, npp))
+}
+
+fn generate_user_id() -> String {
+  let str = random.fixed_size_string(32)
+  let num = random.int(0, 100_000)
+  let secure_prefix =
+    random.int(0, 13)
+    |> random.random_sample()
+    |> seed.new()
+    |> random.sample(num, _)
+    |> int.to_string()
+
+  let secure_id =
+    random.int(0, 9)
+    |> random.random_sample()
+    |> seed.new()
+    |> random.sample(str, _)
+
+  "lntl-user-" <> secure_prefix <> secure_id
 }
