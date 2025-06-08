@@ -1,29 +1,36 @@
 import gleam/erlang/process
-import gleam/http
 import gleam/option.{type Option}
 import gleam/otp/actor
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import mist
-import wisp/wisp_mist
+import users/types/users
 
-pub fn handle_websockets(req) {
+pub fn handle_websockets(req, _roomid: String) {
   mist.websocket(req, ws_handler, on_init, on_close)
 }
 
 fn ws_handler(
-  state: wt.UserSession,
+  state: WsState,
   connection: mist.WebsocketConnection,
   message: mist.WebsocketMessage(wt.SessionOperationMessage),
-) -> actor.Next(wt.SessionOperationMessage, wt.UserSession) {
+) -> actor.Next(wt.SessionOperationMessage, WsState) {
   todo
 }
 
 fn on_init(
   connection: mist.WebsocketConnection,
-) -> #(wt.UserSession, Option(process.Selector(wt.SessionOperationMessage))) {
+) -> #(WsState, Option(process.Selector(wt.SessionOperationMessage))) {
   todo
 }
 
-fn on_close(state: wt.UserSession) -> Nil {
+fn on_close(state: WsState) -> Nil {
   todo
+}
+
+pub type WsState {
+  WsState(
+    user: users.User,
+    user_subj: process.Subject(wt.SessionOperationMessage),
+    room_subj: process.Subject(wt.RoomSessionMessage),
+  )
 }
