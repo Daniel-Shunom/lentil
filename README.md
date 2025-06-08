@@ -1,24 +1,61 @@
-# lentil
+# 🥬 **Lentil**
 
-[![Package Version](https://img.shields.io/hexpm/v/lentil)](https://hex.pm/packages/lentil)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/lentil/)
+> *Fault-tolerant chat backend • Built with Gleam & OTP*
 
-```sh
-gleam add lentil@1
+[![Docs](https://img.shields.io/badge/docs-hexdocs-ff69b4?style=flat-square)](https://hexdocs.pm/lentil/)
+[![Gleam](https://img.shields.io/badge/gleam-✨-ffaff3?style=flat-square)](https://gleam.run)
+[![OTP](https://img.shields.io/badge/otp-⚡-blue?style=flat-square)](https://www.erlang.org/doc/design_principles/des_princ.html)
+
+---
+
+## ⚡ **Quick Start**
+
+```bash
+git clone https://github.com/yourorg/lentil.git && cd lentil
+gleam run  # → localhost:4000
 ```
-```gleam
-import lentil
 
-pub fn main() {
-  // TODO: An example of the project in use
-}
+> Set `PORT` & `DATABASE_URL` via environment variables
+
+---
+
+## 🎯 **API**
+
+```
+POST   /auth/signin           # Get session cookie
+POST   /auth/signout          # Clear session
+WS     /rooms/:id/ws          # Real-time chat
+REST   /rooms                 # CRUD operations
 ```
 
-Further documentation can be found at <https://hexdocs.pm/lentil>.
+**[→ Full Docs](https://hexdocs.pm/lentil/)**
 
-## Development
+---
 
-```sh
-gleam run   # Run the project
-gleam test  # Run the tests
+## 🧪 **Development**
+
+```bash
+gleam run    # Start server
+gleam test   # Run tests
 ```
+
+---
+
+## ✨ **Features**
+
+🏗️ **OTP Actors** • Each user/room runs in supervised processes  
+🔄 **Fault Recovery** • Supervisor trees restart crashed sessions  
+🔌 **Hybrid API** • REST + WebSocket combo  
+📈 **Horizontally Scalable** • Multi-node BEAM ready  
+
+---
+
+## 🤝 **Contributing**
+
+1. Fork → Branch → Code → Test
+2. `git commit -m "Add cool feature"`
+3. Push → PR → 🎉
+
+---
+
+*Built with ❤️ using Gleam + OTP*
