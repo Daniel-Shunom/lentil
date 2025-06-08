@@ -1,8 +1,16 @@
 import gleam/http
 import lntl_server/routes/routes_auth
+import lntl_server/routes/routes_chat
 import lntl_server/routes/routes_create_user
-import mist
 import wisp
+import wisp/wisp_mist
+
+pub fn router(req, str) {
+  case wisp.path_segments(req) {
+    ["rooms", "chatroom"] -> routes_chat.handle_websockets(req)
+    _ -> wisp_mist.handler(server_routing, str)(req)
+  }
+}
 
 pub fn server_routing(req: wisp.Request) -> wisp.Response {
   case wisp.path_segments(req) {
@@ -34,12 +42,6 @@ pub fn server_routing(req: wisp.Request) -> wisp.Response {
     ["rooms"] -> {
       use <- wisp.require_method(req, http.Delete)
       todo
-    }
-
-    ["rooms", "joinroom"] -> {
-      use <- wisp.require_method(req, http.Get)
-      todo
-      //mist.websocket(req)
     }
 
     _ -> wisp.response(500)
