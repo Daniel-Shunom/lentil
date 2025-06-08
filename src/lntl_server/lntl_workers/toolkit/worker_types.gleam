@@ -70,4 +70,5 @@ pub type SessionOperationMessage {
   MESSAGEDELIVERED(msg.Message)
   SUCCESS(String)
   FAILURE(String)
+  CLOSESESSION
 }
