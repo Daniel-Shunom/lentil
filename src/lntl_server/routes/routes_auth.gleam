@@ -1,10 +1,10 @@
-import gleam/option.{None, Some}
+import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
 import gleam/string
-import global/functions.{is_user}
 import lntl_server/lntl_workers/toolkit/worker_functions as wf
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import lntl_server/lntl_workers/w_users/u_session as us
+import users/types/users.{type User}
 import wisp
 
 pub fn handle_auth_signin(req: wisp.Request) -> wisp.Response {
@@ -66,4 +66,8 @@ pub fn handle_auth_signout(req: wisp.Request) -> wisp.Response {
       }
     }
   }
+}
+
+fn is_user(user_name nm: String, password pswd: String) -> Option(User) {
+  todo as "handle login logic here"
 }

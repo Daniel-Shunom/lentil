@@ -1,12 +1,10 @@
 import gleam/int
-import gleam/option.{type Option}
 import gleam/time/calendar.{utc_offset}
 import gleam/time/duration.{to_seconds_and_nanoseconds}
 import gleam/time/timestamp.{from_unix_seconds_and_nanoseconds}
 import global/gtypes.{type LentilTimeStamp}
 import prng/random
 import prng/seed
-import users/types/users.{type User}
 
 // NOTE -> this gets a universal epoch timestamp
 pub fn get_timestamp() -> LentilTimeStamp {
@@ -15,14 +13,6 @@ pub fn get_timestamp() -> LentilTimeStamp {
     seconds,
     nano_seconds,
   ))
-}
-
-pub fn is_user(user_name nm: String, password pswd: String) -> Option(User) {
-  todo as "handle login logic here"
-}
-
-pub fn create_new_user(user: users.User) -> Result(gtypes.CreateMsg, Nil) {
-  todo as "handle user creation logic here"
 }
 
 pub fn id_generator(prefix: String) -> String {
