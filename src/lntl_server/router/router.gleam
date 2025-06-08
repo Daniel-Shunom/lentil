@@ -17,6 +17,10 @@ pub fn server_routing(req: wisp.Request) -> wisp.Response {
       use <- wisp.require_method(req, http.Post)
       routes_create_user.handle_create_user(req)
     }
+    ["user", "profile"] -> {
+      todo
+    }
+
     _ -> wisp.response(500)
   }
 }
