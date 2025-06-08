@@ -7,12 +7,11 @@ pub fn create_user(
   first_name name_f: String,
   last_name name_l: String,
   username uname: String,
-  is_user_auth auth: Bool,
   pronouns_singular sl: String,
   pronouns_plural pl: String,
   dob_day day: Int,
-  dob_week month: Int,
-  dob_month year: Int,
+  dob_month month: Int,
+  dob_year year: Int,
   user_gender gender: users.Gender,
 ) -> users.User {
   let id = generate_user_id()
@@ -20,7 +19,7 @@ pub fn create_user(
     name: users.Name(name_f, name_l),
     username: users.UserName(uname),
     user_id: users.UserId(id),
-    user_auth: auth,
+    user_auth: False,
     user_dob: users.DOB(day, month, year),
     user_gender: gender,
     user_pronouns: users.Pronouns(sl, pl),
