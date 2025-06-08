@@ -21,6 +21,10 @@ pub fn is_user(user_name nm: String, password pswd: String) -> Option(User) {
   todo as "handle login logic here"
 }
 
+pub fn create_new_user(user: users.User) -> Result(gtypes.CreateMsg, Nil) {
+  todo as "handle user creation logic here"
+}
+
 pub fn id_generator(prefix: String) -> String {
   let str = random.fixed_size_string(32)
   let num = random.int(0, 100_000)
