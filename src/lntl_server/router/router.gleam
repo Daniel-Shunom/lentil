@@ -1,19 +1,28 @@
 import gleam/http
+import lntl_server/middleware/lentilite.{middleware}
 import lntl_server/routes/routes_auth
 import lntl_server/routes/routes_chat
+import lntl_server/routes/routes_create_room
 import lntl_server/routes/routes_create_user
+import lntl_server/routes/routes_delete_room
+import lntl_server/routes/routes_profile
 import wisp
 import wisp/wisp_mist
 
-pub fn router(req, str) {
+pub fn router(req, str: String) {
   case wisp.path_segments(req) {
-    ["rooms", "chatroom"] -> routes_chat.handle_websockets(req)
+    ["rooms", "joinroom", roomid] -> {
+      routes_chat.handle_websockets(req, roomid)
+    }
     _ -> wisp_mist.handler(server_routing, str)(req)
   }
 }
 
-pub fn server_routing(req: wisp.Request) -> wisp.Response {
+fn server_routing(req: wisp.Request) -> wisp.Response {
+  use req <- middleware(req)
   case wisp.path_segments(req) {
+    [] -> wisp.accepted()
+
     ["auth", "signin"] -> {
       use <- wisp.require_method(req, http.Post)
       routes_auth.handle_auth_signin(req)
@@ -24,26 +33,26 @@ pub fn server_routing(req: wisp.Request) -> wisp.Response {
       routes_auth.handle_auth_signout(req)
     }
 
-    ["signup"] -> {
+    ["user", "signup"] -> {
       use <- wisp.require_method(req, http.Post)
       routes_create_user.handle_create_user(req)
     }
 
-    ["user", "profile"] -> {
+    ["user", "profile", _sessionid] -> {
       use <- wisp.require_method(req, http.Get)
-      todo
+      routes_profile.handle_get_profile(req)
     }
 
     ["rooms", "newroom"] -> {
       use <- wisp.require_method(req, http.Post)
-      todo
+      routes_create_room.handle_create_room(req)
     }
 
-    ["rooms"] -> {
+    ["rooms", "deleteroom"] -> {
       use <- wisp.require_method(req, http.Delete)
-      todo
+      routes_delete_room.handle_delete_room(req)
     }
 
-    _ -> wisp.response(500)
+    _ -> wisp.bad_request()
   }
 }
