@@ -2,7 +2,6 @@ import gleam/int
 import gleam/otp/task
 import gleam/result
 import gleam/string
-import global/functions.{create_new_user}
 import users/methods/methods.{create_user}
 import users/types/users
 import wisp
@@ -59,4 +58,13 @@ fn get_gender(str: String) -> users.Gender {
     "non" <> _ -> users.NonBinary
     _ -> users.Other
   }
+}
+
+pub fn create_new_user(user: users.User) -> Result(CreateMsg, Nil) {
+  todo as "handle user creation logic here"
+}
+
+pub type CreateMsg {
+  SUCCESS
+  ERROR(String)
 }
