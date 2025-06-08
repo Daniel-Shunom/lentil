@@ -2,6 +2,10 @@
 
 > *Fault-tolerant chat backend • Built with Gleam & OTP*
 
+```
+⚠️  UNDER ACTIVE DEVELOPMENT • THINGS MAY BREAK  ⚠️
+```
+
 [![Docs](https://img.shields.io/badge/docs-hexdocs-ff69b4?style=flat-square)](https://hexdocs.pm/lentil/)
 [![Gleam](https://img.shields.io/badge/gleam-✨-ffaff3?style=flat-square)](https://gleam.run)
 [![OTP](https://img.shields.io/badge/otp-⚡-blue?style=flat-square)](https://www.erlang.org/doc/design_principles/des_princ.html)
@@ -28,7 +32,7 @@ WS     /rooms/:id/ws          # Real-time chat
 REST   /rooms                 # CRUD operations
 ```
 
-**[→ Full Docs](https://hexdocs.pm/lentil/)**
+**[→ Full Docs coming soon](https://hexdocs.pm/lentil/)**
 
 ---
 
