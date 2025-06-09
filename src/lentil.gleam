@@ -1,8 +1,8 @@
 import gleam/erlang/process
+import global/functions.{get_env, initialize_env}
 import lntl_server/router/router.{router}
 import mist
 import wisp
-import zyx/zyx.{get_env, initialize_env}
 
 pub fn main() {
   wisp.configure_logger()
