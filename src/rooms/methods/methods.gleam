@@ -1,6 +1,7 @@
 import gleam/int
 import gleam/list
-import global/functions.{get_timestamp}
+import global/functions.{connect_lentildb, get_timestamp}
+import lntl_server/sql
 import prng/random
 import prng/seed
 import rooms/types/rooms
@@ -163,5 +164,10 @@ fn generate_room_id() -> String {
 }
 
 fn check_name(name: String) -> Bool {
-  todo as "Some database check or something"
+  case sql.fetch_name_exists(connect_lentildb(), name) {
+    Error(_) -> False
+    Ok(res) -> {
+      list.any(res.rows, fn(x) { x.available == True })
+    }
+  }
 }
