@@ -3,9 +3,8 @@ import gleam/list
 import gleam/otp/task
 import gleam/result
 import gleam/string
-import global/functions.{hasher, lentildb_config}
+import global/functions.{connect_lentildb, hasher}
 import lntl_server/sql
-import pog
 import users/methods/methods.{create_user}
 import users/types/users
 import wisp
@@ -84,7 +83,7 @@ fn create_new_user(
   pswd: String,
 ) -> Result(CreateMsg, CreateMsg) {
   let err = "ERROR: FAILED TO CREATE USER"
-  let connection = pog.connect(lentildb_config())
+  let connection = connect_lentildb()
   let users.UserId(id) = user.user_id
   let users.Name(fname, lname) = user.name
   let users.UserName(uname) = user.username
