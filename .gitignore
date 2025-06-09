@@ -3,3 +3,4 @@
 *.env
 /build
 erl_crash.dump
+*.sql
