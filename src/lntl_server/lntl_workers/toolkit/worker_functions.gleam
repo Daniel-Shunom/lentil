@@ -4,6 +4,7 @@ import gleam/int
 import gleam/list
 import gleam/otp/actor
 import gleam/set
+import global/functions.{get_timestamp}
 import lntl_server/lntl_workers/toolkit/constants as m
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import messages/methods/methods as mt
@@ -355,11 +356,13 @@ fn create_user_process_helper(
 }
 
 fn get_owned_rooms(_user: users.User) -> List(rooms.RoomId) {
-  todo as "db call to get list of id's"
+  todo
+  [rooms.RoomId(id: "", created: get_timestamp())]
 }
 
 fn get_member_rooms(_user: users.User) -> List(rooms.RoomId) {
-  todo as "db call to get list of id's"
+  todo
+  [rooms.RoomId(id: "", created: get_timestamp())]
 }
 
 fn generate_session_id(id_type: wt.SESSIONTYPE) -> String {
