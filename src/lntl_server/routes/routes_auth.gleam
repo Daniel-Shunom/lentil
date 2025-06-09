@@ -99,11 +99,11 @@ fn is_user(user_name unm: String, password pswd: String) -> Option(User) {
   }
 }
 
-pub type Credentials {
+type Credentials {
   Credentials(username: String, password: String)
 }
 
-pub fn credentials_decoder() -> decode.Decoder(Credentials) {
+fn credentials_decoder() -> decode.Decoder(Credentials) {
   use username <- decode.field("username", decode.string)
   use password <- decode.field("password", decode.string)
   decode.success(Credentials(username, password))
