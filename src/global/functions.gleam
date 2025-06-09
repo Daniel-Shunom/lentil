@@ -60,7 +60,11 @@ pub fn hasher(str: String) -> String {
   |> result.unwrap(str)
 }
 
-pub fn lentildb_config() -> pog.Config {
+pub fn connect_lentildb() -> pog.Connection {
+  pog.connect(lentildb_config())
+}
+
+fn lentildb_config() -> pog.Config {
   let pgport =
     int.parse(get_env("PGPORT"))
     |> result.unwrap(5432)
