@@ -22,13 +22,11 @@ packages = [
   { name = "houdini", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "houdini", source = "hex", outer_checksum = "5BA517E5179F132F0471CB314F27FE210A10407387DA1EA4F6FD084F74469FC2" },
   { name = "hpack_erl", version = "0.3.0", build_tools = ["rebar3"], requirements = [], otp_app = "hpack", source = "hex", outer_checksum = "D6137D7079169D8C485C6962DFE261AF5B9EF60FBC557344511C1E65E3D95FB0" },
   { name = "logging", version = "1.3.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "logging", source = "hex", outer_checksum = "1098FBF10B54B44C2C7FDF0B01C1253CAFACDACABEFB4B0D027803246753E06D" },
-  { name = "lustre", version = "5.1.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_json", "gleam_otp", "gleam_stdlib", "houdini"], otp_app = "lustre", source = "hex", outer_checksum = "A0ADD4D936A49EE2CEBB8070F39058009122F0321D4B5445843D56E54875ECD8" },
   { name = "marceau", version = "1.3.0", build_tools = ["gleam"], requirements = [], otp_app = "marceau", source = "hex", outer_checksum = "2D1C27504BEF45005F5DFB18591F8610FB4BFA91744878210BDC464412EC44E9" },
   { name = "mist", version = "4.0.7", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_http", "gleam_otp", "gleam_stdlib", "gleam_yielder", "glisten", "gramps", "hpack_erl", "logging"], otp_app = "mist", source = "hex", outer_checksum = "F7D15A1E3232E124C7CE31900253633434E59B34ED0E99F273DEE61CDB573CDD" },
   { name = "platform", version = "1.0.0", build_tools = ["gleam"], requirements = [], otp_app = "platform", source = "hex", outer_checksum = "8339420A95AD89AAC0F82F4C3DB8DD401041742D6C3F46132A8739F6AEB75391" },
   { name = "prng", version = "4.0.1", build_tools = ["gleam"], requirements = ["gleam_bitwise", "gleam_stdlib", "gleam_yielder"], otp_app = "prng", source = "hex", outer_checksum = "695AB70E4BE713042062E901975FC08D1EC725B85B808D4786A14C406ADFBCF1" },
   { name = "simplifile", version = "2.2.1", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "C88E0EE2D509F6D86EB55161D631657675AA7684DAB83822F7E59EB93D9A60E3" },
-  { name = "stratus", version = "0.9.7", build_tools = ["gleam"], requirements = ["gleam_crypto", "gleam_erlang", "gleam_http", "gleam_otp", "gleam_stdlib", "gramps", "logging"], otp_app = "stratus", source = "hex", outer_checksum = "4B3344B24B0808AF5828EFE3BEB824D3298E0ECAC8069D85D14A6A33BAD85CBD" },
   { name = "telemetry", version = "1.3.0", build_tools = ["rebar3"], requirements = [], otp_app = "telemetry", source = "hex", outer_checksum = "7015FC8919DBE63764F4B4B87A95B7C0996BD539E0D499BE6EC9D7F3875B79E6" },
   { name = "wisp", version = "1.7.0", build_tools = ["gleam"], requirements = ["directories", "exception", "gleam_crypto", "gleam_erlang", "gleam_http", "gleam_json", "gleam_stdlib", "houdini", "logging", "marceau", "mist", "simplifile"], otp_app = "wisp", source = "hex", outer_checksum = "DE522F0F9DDAB30D4F2974A56F1ED546C36AB9E98F023F0F0B15B1B8A2EC94D9" },
 ]
@@ -44,9 +42,7 @@ gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleam_time = { version = ">= 1.2.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 glisten = { version = ">= 7.0.1 and < 8.0.0" }
-lustre = { version = ">= 5.1.0 and < 6.0.0" }
 mist = { version = ">= 4.0.7 and < 5.0.0" }
 prng = { version = ">= 4.0.1 and < 5.0.0" }
 simplifile = { version = ">= 2.2.1 and < 3.0.0" }
-stratus = { version = ">= 0.9.7 and < 1.0.0" }
 wisp = { version = ">= 1.7.0 and < 2.0.0" }
