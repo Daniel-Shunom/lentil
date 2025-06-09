@@ -2,7 +2,7 @@ import gleam/dynamic/decode
 import gleam/json
 import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
-import global/functions.{id_generator}
+import global/functions.{hasher, id_generator}
 import lntl_server/lntl_workers/toolkit/worker_functions as wf
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import lntl_server/lntl_workers/w_users/u_session as us
@@ -72,17 +72,10 @@ pub fn handle_auth_signout(req: wisp.Request) -> wisp.Response {
   }
 }
 
-fn is_user(user_name _nm: String, password _pswd: String) -> Option(User) {
+fn is_user(user_name unm: String, password pswd: String) -> Option(User) {
+  let hashed_pswd = hasher(pswd)
+  let hashed_uname = hasher(unm)
   todo
-  option.Some(users.User(
-    users.Name(first: "default", last: "default"),
-    user_id: users.UserId(id: id_generator("lntl_user")),
-    username: users.UserName(username: "default"),
-    user_auth: True,
-    user_dob: users.DOB(day: 15, month: 6, year: 2002),
-    user_gender: users.CisGender,
-    user_pronouns: users.Pronouns(singular: "He", plural: "Him"),
-  ))
 }
 
 pub type Credentials {

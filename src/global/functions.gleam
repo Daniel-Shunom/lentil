@@ -1,4 +1,7 @@
+import gleam/bit_array
+import gleam/crypto.{Sha512}
 import gleam/int
+import gleam/result
 import gleam/time/calendar.{utc_offset}
 import gleam/time/duration.{to_seconds_and_nanoseconds}
 import gleam/time/timestamp.{from_unix_seconds_and_nanoseconds}
@@ -32,4 +35,11 @@ pub fn id_generator(prefix: String) -> String {
     |> random.sample(str, _)
 
   prefix <> secure_prefix <> secure_id
+}
+
+pub fn hasher(str: String) -> String {
+  bit_array.from_string(str)
+  |> crypto.hash(Sha512, _)
+  |> bit_array.to_string
+  |> result.unwrap(str)
 }
