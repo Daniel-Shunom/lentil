@@ -1,13 +1,29 @@
+import dot_env
+import dot_env/env
 import gleam/bit_array
 import gleam/crypto.{Sha512}
 import gleam/int
+import gleam/option.{Some}
 import gleam/result
 import gleam/time/calendar.{utc_offset}
 import gleam/time/duration.{to_seconds_and_nanoseconds}
 import gleam/time/timestamp.{from_unix_seconds_and_nanoseconds}
 import global/gtypes.{type LentilTimeStamp}
+import pog
 import prng/random
 import prng/seed
+
+pub fn initialize_env() -> Nil {
+  dot_env.new()
+  |> dot_env.set_path(".env")
+  |> dot_env.set_debug(False)
+  |> dot_env.load()
+}
+
+pub fn get_env(val_key: String) -> String {
+  let assert Ok(secret) = env.get_string(val_key)
+  secret
+}
 
 // NOTE -> this gets a universal epoch timestamp
 pub fn get_timestamp() -> LentilTimeStamp {
@@ -42,4 +58,28 @@ pub fn hasher(str: String) -> String {
   |> crypto.hash(Sha512, _)
   |> bit_array.to_string
   |> result.unwrap(str)
+}
+
+pub fn lentildb_config() -> pog.Config {
+  let pgport =
+    int.parse(get_env("PGPORT"))
+    |> result.unwrap(5432)
+  initialize_env()
+  pog.Config(
+    host: get_env("PGHOST"),
+    port: pgport,
+    database: get_env("PGDATABASE"),
+    user: get_env("PGUSER"),
+    password: Some(get_env("PGPASSWORD")),
+    ssl: pog.SslDisabled,
+    connection_parameters: [],
+    pool_size: 50,
+    queue_target: 100,
+    queue_interval: 100,
+    idle_interval: 300,
+    trace: True,
+    ip_version: pog.Ipv4,
+    rows_as_map: True,
+    default_timeout: 30,
+  )
 }
