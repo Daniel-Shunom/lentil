@@ -4,9 +4,11 @@ import gleam/int
 import gleam/list
 import gleam/otp/actor
 import gleam/set
-import global/functions.{get_timestamp}
+import global/functions.{connect_lentildb}
+import global/gtypes
 import lntl_server/lntl_workers/toolkit/constants as m
 import lntl_server/lntl_workers/toolkit/worker_types as wt
+import lntl_server/sql
 import messages/methods/methods as mt
 import messages/types/msg
 import prng/random
@@ -355,14 +357,26 @@ fn create_user_process_helper(
   |> Ok()
 }
 
-fn get_owned_rooms(_user: users.User) -> List(rooms.RoomId) {
-  todo
-  [rooms.RoomId(id: "", created: get_timestamp())]
+fn get_owned_rooms(user: users.User) -> List(rooms.RoomId) {
+  case sql.fetch_room_by_id(connect_lentildb(), user.user_id.id) {
+    Error(_) -> []
+    Ok(res) -> {
+      list.map(res.rows, fn(val) {
+        rooms.RoomId(id: val.id, created: gtypes.Time(val.created_at))
+      })
+    }
+  }
 }
 
-fn get_member_rooms(_user: users.User) -> List(rooms.RoomId) {
-  todo
-  [rooms.RoomId(id: "", created: get_timestamp())]
+fn get_member_rooms(user: users.User) -> List(rooms.RoomId) {
+  case sql.fetch_user_room_memberships(connect_lentildb(), user.user_id.id) {
+    Error(_) -> []
+    Ok(res) -> {
+      list.map(res.rows, fn(val) {
+        rooms.RoomId(id: val.room_id, created: gtypes.Time(val.joined_at))
+      })
+    }
+  }
 }
 
 fn generate_session_id(id_type: wt.SESSIONTYPE) -> String {
