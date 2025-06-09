@@ -88,7 +88,8 @@ fn create_new_user(
   let users.UserId(id) = user.user_id
   let users.Name(fname, lname) = user.name
   let users.UserName(uname) = user.username
-  let hashed = hasher(pswd)
+  let hashedp = hasher(pswd)
+  let hashedu = hasher(uname)
   let users.DOB(day, month, year) = user.user_dob
   let gender = get_gender_str(user.user_gender)
   let pronouns = get_pronouns(user.user_pronouns)
@@ -98,8 +99,8 @@ fn create_new_user(
       id,
       fname,
       lname,
-      uname,
-      hashed,
+      hashedu,
+      hashedp,
       day,
       month,
       year,

@@ -10,20 +10,20 @@ pub fn handle_websockets(req, _roomid: String) {
 }
 
 fn ws_handler(
-  state: WsState,
-  connection: mist.WebsocketConnection,
-  message: mist.WebsocketMessage(wt.SessionOperationMessage),
+  _state: WsState,
+  _connection: mist.WebsocketConnection,
+  _message: mist.WebsocketMessage(wt.SessionOperationMessage),
 ) -> actor.Next(wt.SessionOperationMessage, WsState) {
   todo
 }
 
 fn on_init(
-  connection: mist.WebsocketConnection,
+  _connection: mist.WebsocketConnection,
 ) -> #(WsState, Option(process.Selector(wt.SessionOperationMessage))) {
   todo
 }
 
-fn on_close(state: WsState) -> Nil {
+fn on_close(_state: WsState) -> Nil {
   todo
 }
 
