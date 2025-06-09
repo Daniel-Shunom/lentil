@@ -520,6 +520,44 @@ WHERE id = $1
   |> pog.execute(db)
 }
 
+/// A row you get from running the `fetch_name_exists` query
+/// defined in `./src/lntl_server/sql/fetch_name_exists.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v3.0.4 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type FetchNameExistsRow {
+  FetchNameExistsRow(available: Bool)
+}
+
+/// name: is_room_name_available :one
+/// Check if a given room name is not already taken
+///
+/// > 🐿️ This function was generated automatically using v3.0.4 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn fetch_name_exists(db, arg_1) {
+  let decoder = {
+    use available <- decode.field(0, decode.bool)
+    decode.success(FetchNameExistsRow(available:))
+  }
+
+  "-- name: is_room_name_available :one
+-- Check if a given room name is not already taken
+SELECT
+  NOT EXISTS (
+    SELECT 1
+    FROM lntl.rooms
+    WHERE name = $1
+  ) AS available
+;
+"
+  |> pog.query
+  |> pog.parameter(pog.text(arg_1))
+  |> pog.returning(decoder)
+  |> pog.execute(db)
+}
+
 /// Runs the `delete_user_session` query
 /// defined in `./src/lntl_server/sql/delete_user_session.sql`.
 ///
