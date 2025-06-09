@@ -35,6 +35,7 @@ packages = [
 
 [requirements]
 dot_env = { version = ">= 1.2.0 and < 2.0.0" }
+gleam_crypto = { version = ">= 1.5.0 and < 2.0.0" }
 gleam_erlang = { version = ">= 0.34.0 and < 1.0.0" }
 gleam_http = { version = ">= 4.0.0 and < 5.0.0" }
 gleam_json = { version = ">= 3.0.1 and < 4.0.0" }
