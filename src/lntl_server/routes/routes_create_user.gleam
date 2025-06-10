@@ -9,11 +9,9 @@ import users/types/users
 import wisp
 
 pub fn handle_create_user(req: wisp.Request) -> wisp.Response {
-  // 1) Enforce JSON
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
 
-  // 2) Decode the payload
   case decode.run(json, user_decoder()) {
     Error(_) -> wisp.response(400)
     Ok(UserReqs(
