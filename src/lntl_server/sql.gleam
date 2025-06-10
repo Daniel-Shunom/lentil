@@ -822,18 +822,26 @@ pub fn create_new_room(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
   updated_at
 )
 SELECT
-  $1,     -- new room id
-  $2,     -- owner_id to check
-  $3,     -- name
-  $4,     -- capacity
-  $5,     -- status
+  $1,    -- new room id
+  $2,    -- owner_id to check
+  $3,    -- room name
+  $4,    -- capacity
+  $5,    -- status
   now(),
   now()
-WHERE EXISTS (
-  SELECT 1
-  FROM lntl.users
-  WHERE id = $2
-)
+WHERE
+  -- only insert if the user exists
+  EXISTS (
+    SELECT 1
+    FROM lntl.users
+    WHERE id = $2
+  )
+  -- and no other room already has the same name
+  AND NOT EXISTS (
+    SELECT 1
+    FROM lntl.rooms
+    WHERE name = $3
+  )
 RETURNING id;
 "
   |> pog.query
