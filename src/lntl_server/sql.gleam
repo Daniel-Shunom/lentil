@@ -751,16 +751,30 @@ pub fn create_user(
   }
 
   "INSERT INTO lntl.users (
-  id, first_name, last_name, username,
-  password_hash, dob_day, dob_month, dob_year,
-  gender, pronouns, is_authenticated, created_at
-) VALUES (
+  id,
+  first_name,
+  last_name,
+  username,
+  password_hash,
+  dob_day,
+  dob_month,
+  dob_year,
+  gender,
+  pronouns,
+  is_authenticated,
+  created_at
+)
+SELECT
   $1, $2, $3, $4,
   $5, $6, $7, $8,
   $9, $10, TRUE, now()
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM lntl.users
+  WHERE username = $4
 )
-RETURNING id
-;"
+RETURNING id;
+"
   |> pog.query
   |> pog.parameter(pog.text(arg_1))
   |> pog.parameter(pog.text(arg_2))
