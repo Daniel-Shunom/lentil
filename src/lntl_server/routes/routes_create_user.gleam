@@ -2,13 +2,14 @@ import gleam/dynamic/decode
 import gleam/list
 import gleam/otp/task
 import gleam/string
-import global/functions.{connect_lentildb, hasher}
+import global/ctx/ctx
+import global/functions.{hasher}
 import lntl_server/sql
 import users/methods/methods.{create_user}
 import users/types/users
 import wisp
 
-pub fn handle_create_user(req: wisp.Request) -> wisp.Response {
+pub fn handle_create_user(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
 
@@ -38,7 +39,7 @@ pub fn handle_create_user(req: wisp.Request) -> wisp.Response {
           dob_year: year,
           user_gender: get_gender(gender_str),
         )
-      case register_user(user, password) {
+      case register_user(user, password, ctx) {
         Error(_) -> wisp.response(500)
         Ok(results) -> {
           case results {
@@ -100,8 +101,8 @@ type UserReqs {
 // ————————————————————————————————————————————
 // The rest of your helpers stay the same:
 
-fn register_user(user: users.User, pswd: String) {
-  let handler = fn() { create_new_user(user, pswd) }
+fn register_user(user: users.User, pswd: String, ctx: ctx.Context) {
+  let handler = fn() { create_new_user(user, pswd, ctx) }
   task.try_await(task.async(handler), 10_000)
 }
 
@@ -132,9 +133,9 @@ fn get_gender_str(g: users.Gender) -> String {
 fn create_new_user(
   user: users.User,
   pswd: String,
+  ctx: ctx.Context,
 ) -> Result(CreateMsg, CreateMsg) {
   let err = "ERROR: FAILED TO CREATE USER"
-  let conn = connect_lentildb()
   let users.UserId(id) = user.user_id
   let users.Name(f, l) = user.name
   let users.UserName(un) = user.username
@@ -144,7 +145,19 @@ fn create_new_user(
   let gender = get_gender_str(user.user_gender)
   let pronouns = get_pronouns(user.user_pronouns)
   let response =
-    sql.create_user(conn, id, f, l, hashedu, hashedp, d, m, y, gender, pronouns)
+    sql.create_user(
+      ctx.db_connection,
+      id,
+      f,
+      l,
+      hashedu,
+      hashedp,
+      d,
+      m,
+      y,
+      gender,
+      pronouns,
+    )
   case response {
     Ok(_) -> Ok(SUCCESS)
     Error(_) -> Error(ERROR(err))

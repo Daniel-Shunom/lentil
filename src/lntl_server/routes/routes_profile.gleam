@@ -4,17 +4,17 @@ import gleam/json
 import gleam/list
 import gleam/option
 import gleam/string
-import global/functions.{connect_lentildb}
+import global/ctx/ctx
 import lntl_server/sql
 import wisp
 
-pub fn handle_get_profile(req: wisp.Request) -> wisp.Response {
+pub fn handle_get_profile(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
   case decode.run(json, id_decoder()) {
     Error(_) -> wisp.response(500)
     Ok(userid) -> {
-      case sql.fetch_user_by_id(connect_lentildb(), userid) {
+      case sql.fetch_user_by_id(ctx.db_connection, userid) {
         Error(_) -> wisp.response(400)
         Ok(user) -> {
           case user.rows {

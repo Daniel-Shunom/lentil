@@ -1,9 +1,11 @@
 import gleam/dynamic/decode
-import global/functions.{connect_lentildb, id_generator}
+import global/ctx/ctx
+import global/functions.{id_generator}
+import lntl_server/lntl_workers/toolkit/worker_functions as wf
 import lntl_server/sql
 import wisp
 
-pub fn handle_create_room(req: wisp.Request) -> wisp.Response {
+pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
   case decode.run(json, room_decoder()) {
@@ -11,7 +13,7 @@ pub fn handle_create_room(req: wisp.Request) -> wisp.Response {
     Ok(RoomReqs(id, ownerid, roomname, capacity, status)) -> {
       case
         sql.create_new_room(
-          connect_lentildb(),
+          ctx.db_connection,
           id,
           ownerid,
           roomname,

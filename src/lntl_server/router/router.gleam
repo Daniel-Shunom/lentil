@@ -1,4 +1,5 @@
 import gleam/http
+import global/ctx/ctx
 import lntl_server/middleware/lentilite.{middleware}
 import lntl_server/routes/routes_auth
 import lntl_server/routes/routes_chat
@@ -19,38 +20,39 @@ pub fn router(req, str: String) {
 }
 
 fn server_routing(req: wisp.Request) -> wisp.Response {
-  use req <- middleware(req)
+  let ctx = ctx.get_context()
+  use req, ctx <- middleware(req, ctx)
   case wisp.path_segments(req) {
     [] -> wisp.accepted()
 
     ["auth", "signin"] -> {
       use <- wisp.require_method(req, http.Post)
-      routes_auth.handle_auth_signin(req)
+      routes_auth.handle_auth_signin(req, ctx)
     }
 
     ["auth", "signout"] -> {
       use <- wisp.require_method(req, http.Post)
-      routes_auth.handle_auth_signout(req)
+      routes_auth.handle_auth_signout(req, ctx)
     }
 
     ["user", "signup"] -> {
       use <- wisp.require_method(req, http.Post)
-      routes_create_user.handle_create_user(req)
+      routes_create_user.handle_create_user(req, ctx)
     }
 
     ["user", "profile", _sessionid] -> {
       use <- wisp.require_method(req, http.Get)
-      routes_profile.handle_get_profile(req)
+      routes_profile.handle_get_profile(req, ctx)
     }
 
     ["rooms", "newroom"] -> {
       use <- wisp.require_method(req, http.Post)
-      routes_create_room.handle_create_room(req)
+      routes_create_room.handle_create_room(req, ctx)
     }
 
     ["rooms", "deleteroom"] -> {
       use <- wisp.require_method(req, http.Delete)
-      routes_delete_room.handle_delete_room(req)
+      routes_delete_room.handle_delete_room(req, ctx)
     }
 
     _ -> wisp.bad_request()

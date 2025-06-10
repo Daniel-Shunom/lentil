@@ -5,14 +5,14 @@ import lntl_server/lntl_workers/toolkit/worker_types as wt
 import users/types/users
 import wisp
 
-pub type UserSupervisorState {
-  UserSupervisorState(
+pub type UserSessionRegistryState {
+  UserSessionRegistryState(
     children: Dict(String, process.Pid),
     by_user: Dict(String, String),
   )
 }
 
-pub type UserSupervisorMessage {
+pub type UserSessionRegistryMessage {
   STOP(
     session_id: String,
     reply_to: process.Subject(wt.SessionOperationMessage),
@@ -26,16 +26,16 @@ pub type UserSupervisorMessage {
   )
 }
 
-pub fn start_user_supervisor() -> process.Subject(UserSupervisorMessage) {
-  let init = UserSupervisorState(children: dict.new(), by_user: dict.new())
+pub fn start_user_supervisor() -> process.Subject(UserSessionRegistryMessage) {
+  let init = UserSessionRegistryState(children: dict.new(), by_user: dict.new())
   let assert Ok(subj) = actor.start(init, user_supervisor_handler)
   subj
 }
 
 fn user_supervisor_handler(
-  msg: UserSupervisorMessage,
-  state: UserSupervisorState,
-) -> actor.Next(UserSupervisorMessage, UserSupervisorState) {
+  msg: UserSessionRegistryMessage,
+  state: UserSessionRegistryState,
+) -> actor.Next(UserSessionRegistryMessage, UserSessionRegistryState) {
   case msg {
     START(user, user_subj, session_id, reply_to) -> {
       process.trap_exits(True)
@@ -50,7 +50,7 @@ fn user_supervisor_handler(
       reply_to
       |> actor.send(wt.SUCCESS(session_id))
 
-      actor.continue(UserSupervisorState(
+      actor.continue(UserSessionRegistryState(
         children: children2,
         by_user: recorded_user,
       ))
@@ -73,7 +73,7 @@ fn user_supervisor_handler(
     EXIT(session_id) -> {
       let children2 = dict.delete(state.children, session_id)
       wisp.log_error("UserSession #{session_id} crashed")
-      actor.continue(UserSupervisorState(..state, children: children2))
+      actor.continue(UserSessionRegistryState(..state, children: children2))
     }
   }
 }

@@ -1,15 +1,15 @@
 import gleam/dynamic/decode
-import global/functions.{connect_lentildb}
+import global/ctx/ctx
 import lntl_server/sql
 import wisp
 
-pub fn handle_delete_room(req: wisp.Request) -> wisp.Response {
+pub fn handle_delete_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
   case decode.run(json, requirements_decoder()) {
     Error(_) -> wisp.response(400)
     Ok(Requirements(userid, roomid)) -> {
-      case sql.delete_room(connect_lentildb(), roomid, userid) {
+      case sql.delete_room(ctx.db_connection, roomid, userid) {
         Error(_) -> wisp.bad_request()
         Ok(_) -> {
           todo as "shutdown room process"
