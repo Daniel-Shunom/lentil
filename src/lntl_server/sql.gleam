@@ -596,21 +596,44 @@ WHERE room_id = $1
   |> pog.execute(db)
 }
 
-/// Runs the `delete_room` query
+/// A row you get from running the `delete_room` query
 /// defined in `./src/lntl_server/sql/delete_room.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v3.0.4 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type DeleteRoomRow {
+  DeleteRoomRow(id: String)
+}
+
+/// Soft-delete a room by its owner
+/// name: soft_delete_room_by_owner :one
 ///
 /// > 🐿️ This function was generated automatically using v3.0.4 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
-pub fn delete_room(db, arg_1) {
-  let decoder = decode.map(decode.dynamic, fn(_) { Nil })
+pub fn delete_room(db, arg_1, arg_2) {
+  let decoder = {
+    use id <- decode.field(0, decode.string)
+    decode.success(DeleteRoomRow(id:))
+  }
 
-  "DELETE FROM lntl.rooms
-WHERE id = $1
+  "-- Soft-delete a room by its owner
+-- name: soft_delete_room_by_owner :one
+UPDATE lntl.rooms
+SET
+  status     = 'DELETED',
+  deleted_at = now(),
+  updated_at = now()
+WHERE
+  id       = $1
+  AND owner_id = $2
+RETURNING id
 ;
 "
   |> pog.query
   |> pog.parameter(pog.text(arg_1))
+  |> pog.parameter(pog.text(arg_2))
   |> pog.returning(decoder)
   |> pog.execute(db)
 }
