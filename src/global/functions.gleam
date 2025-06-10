@@ -78,12 +78,12 @@ fn lentildb_config() -> pog.Config {
     ssl: pog.SslDisabled,
     connection_parameters: [],
     pool_size: 50,
-    queue_target: 100,
-    queue_interval: 100,
-    idle_interval: 300,
-    trace: True,
+    queue_target: 50,
+    queue_interval: 1000,
+    idle_interval: 1000,
+    trace: False,
     ip_version: pog.Ipv4,
-    rows_as_map: True,
-    default_timeout: 30,
+    rows_as_map: False,
+    default_timeout: 5000,
   )
 }
