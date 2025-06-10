@@ -20,9 +20,14 @@ pub fn handle_create_room(req: wisp.Request) -> wisp.Response {
         )
       {
         Error(_) -> wisp.response(400)
-        Ok(_) -> {
-          todo as "create permanent running process"
-          wisp.response(200)
+        Ok(val) -> {
+          case val.rows {
+            [] -> wisp.bad_request()
+            [room, ..] -> {
+              room.id
+              todo as "create permanent running process"
+            }
+          }
         }
       }
     }
