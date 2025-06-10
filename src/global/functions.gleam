@@ -16,7 +16,7 @@ import prng/seed
 pub fn initialize_env() -> Nil {
   dot_env.new()
   |> dot_env.set_path(".env")
-  |> dot_env.set_debug(False)
+  |> dot_env.set_debug(True)
   |> dot_env.load()
 }
 
@@ -65,10 +65,10 @@ pub fn connect_lentildb() -> pog.Connection {
 }
 
 fn lentildb_config() -> pog.Config {
+  initialize_env()
   let pgport =
     int.parse(get_env("PGPORT"))
     |> result.unwrap(5432)
-  initialize_env()
   pog.Config(
     host: get_env("PGHOST"),
     port: pgport,
