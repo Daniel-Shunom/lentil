@@ -813,12 +813,29 @@ pub fn create_new_room(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
   }
 
   "INSERT INTO lntl.rooms (
-  id, owner_id, name, capacity, status, created_at, updated_at
-) VALUES (
-  $1, $2, $3, $4, $5, now(), now()
+  id,
+  owner_id,
+  name,
+  capacity,
+  status,
+  created_at,
+  updated_at
 )
-RETURNING id
-;"
+SELECT
+  $1,     -- new room id
+  $2,     -- owner_id to check
+  $3,     -- name
+  $4,     -- capacity
+  $5,     -- status
+  now(),
+  now()
+WHERE EXISTS (
+  SELECT 1
+  FROM lntl.users
+  WHERE id = $2
+)
+RETURNING id;
+"
   |> pog.query
   |> pog.parameter(pog.text(arg_1))
   |> pog.parameter(pog.text(arg_2))
