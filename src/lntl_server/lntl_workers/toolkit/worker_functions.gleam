@@ -21,7 +21,10 @@ pub fn create_room_process(
   owner: users.User,
   cap: rooms.RoomCapacity,
   name: String,
-) -> Result(process.Subject(wt.RoomSessionMessage), rooms.RoomCreateError) {
+) -> Result(
+  #(process.Subject(wt.RoomSessionMessage), String),
+  rooms.RoomCreateError,
+) {
   create_room_process_helper(owner, cap, name)
 }
 
@@ -308,7 +311,10 @@ fn create_room_process_helper(
   room_owner owner: users.User,
   capacity cap: rooms.RoomCapacity,
   room_name name: String,
-) -> Result(process.Subject(wt.RoomSessionMessage), rooms.RoomCreateError) {
+) -> Result(
+  #(process.Subject(wt.RoomSessionMessage), String),
+  rooms.RoomCreateError,
+) {
   case methods.create_room(owner, name, [], cap) {
     Error(error) -> Error(error)
     Ok(new_room) -> {
@@ -323,7 +329,7 @@ fn create_room_process_helper(
         )
       let assert Ok(new_process) =
         actor.start(new_room_session, room_session_handler)
-      Ok(new_process)
+      Ok(#(new_process, new_session_id))
     }
   }
 }
