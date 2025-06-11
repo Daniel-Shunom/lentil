@@ -1,11 +1,12 @@
 import gleam/erlang/process
 import gleam/option.{type Option}
 import gleam/otp/actor
+import global/ctx/ctx
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import mist
 import users/types/users
 
-pub fn handle_websockets(req, _roomid: String) {
+pub fn handle_websockets(req, _roomid: String, _ctx: ctx.Context) {
   mist.websocket(req, ws_handler, on_init, on_close)
 }
 
