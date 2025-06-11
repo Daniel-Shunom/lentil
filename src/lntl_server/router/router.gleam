@@ -14,7 +14,7 @@ pub fn router(req, str: String, ctx: ctx.Context) {
   let handler = server_routing(_, ctx)
   case wisp.path_segments(req) {
     ["rooms", "joinroom", roomid] -> {
-      routes_chat.handle_websockets(req, roomid)
+      routes_chat.handle_websockets(req, roomid, ctx)
     }
     _ -> wisp_mist.handler(handler, str)(req)
   }
