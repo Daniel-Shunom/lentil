@@ -1,5 +1,5 @@
 import global/gtypes.{type LentilTimeStamp}
-import users/types/users.{type User, type UserId}
+import users/types/users.{type UserId}
 
 pub const small_cap = 128
 
