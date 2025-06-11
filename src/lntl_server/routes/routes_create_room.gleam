@@ -13,11 +13,11 @@ pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
   use json <- wisp.require_json(req)
   case decode.run(json, room_decoder()) {
     Error(_) -> wisp.response(400)
-    Ok(RoomReqs(id, ownerid, roomname, capacity, status)) -> {
+    Ok(RoomReqs(roomid, ownerid, roomname, capacity, status)) -> {
       case
         sql.create_new_room(
           ctx.db_connection,
-          id,
+          roomid,
           ownerid,
           roomname,
           get_cap(capacity),
@@ -40,7 +40,7 @@ fn room_decoder() -> decode.Decoder(RoomReqs) {
   use roomname <- decode.field("roomname", decode.string)
   use cap <- decode.field("capacity", decode.string)
   decode.success(RoomReqs(
-    id: id_generator("lntl-rm"),
+    roomid: id_generator("lntl-rm"),
     owner_id: ownerid,
     roomname: roomname,
     capacity: capacity(cap),
@@ -50,7 +50,7 @@ fn room_decoder() -> decode.Decoder(RoomReqs) {
 
 type RoomReqs {
   RoomReqs(
-    id: String,
+    roomid: String,
     owner_id: String,
     roomname: String,
     capacity: RoomCapacity,
