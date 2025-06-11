@@ -18,7 +18,7 @@ import rooms/types/rooms
 import users/types/users
 
 pub fn create_room_process(
-  owner: users.User,
+  owner: users.UserId,
   cap: rooms.RoomCapacity,
   name: String,
 ) -> Result(
@@ -43,8 +43,8 @@ fn room_session_handler(
 ) -> actor.Next(wt.RoomSessionMessage, wt.RoomSession) {
   case session_message {
     wt.DELETEROOM(user, client) -> {
-      let userid = user.user_id
-      let room_owner_id = session_state.room_data.room_owner.user_id
+      let userid = user
+      let room_owner_id = session_state.room_data.room_owner
       case userid == room_owner_id {
         True -> {
           wt.SUCCESS(m.room_delete_success)
@@ -308,7 +308,7 @@ fn sanitize_message(msg: msg.Message) -> msg.Message {
 }
 
 fn create_room_process_helper(
-  room_owner owner: users.User,
+  room_owner owner: users.UserId,
   capacity cap: rooms.RoomCapacity,
   room_name name: String,
 ) -> Result(
