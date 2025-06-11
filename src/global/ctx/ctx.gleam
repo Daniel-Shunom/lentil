@@ -7,7 +7,7 @@ import lntl_server/lntl_workers/toolkit/worker_functions as wf
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import pog
 import rooms/types/rooms
-import users/types/users.{type User, User}
+import users/types/users.{type User, type UserId, User, UserId}
 
 // Public Types / APIs
 
@@ -37,7 +37,7 @@ pub type RmMsg {
 
 pub type RmSupMsg {
   DELROOM(userid: String)
-  NEWROOM(userid: User, capacity: rooms.RoomCapacity, roomname: String)
+  NEWROOM(userid: UserId, capacity: rooms.RoomCapacity, roomname: String)
 }
 
 pub fn get_context() -> Context {
