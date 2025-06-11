@@ -33,27 +33,31 @@ pub type UserSession {
 // This type indicates the type of messages a room session
 // can have.
 pub type RoomSessionMessage {
-  DELETEROOM(users.User, process.Subject(SessionOperationMessage))
+  DELETEROOM(users.UserId, process.Subject(SessionOperationMessage))
   SENDMESSAGE(msg.Message, process.Subject(SessionOperationMessage))
-  CONNECT(users.User, process.Pid, process.Subject(SessionOperationMessage))
-  DISCONNECT(users.User, process.Pid, process.Subject(SessionOperationMessage))
-  LEAVE(users.User, process.Pid, process.Subject(SessionOperationMessage))
-  JOIN(users.User, process.Pid, process.Subject(SessionOperationMessage))
-  UPDATENAME(users.User, String, process.Subject(SessionOperationMessage))
+  CONNECT(users.UserId, process.Pid, process.Subject(SessionOperationMessage))
+  DISCONNECT(
+    users.UserId,
+    process.Pid,
+    process.Subject(SessionOperationMessage),
+  )
+  LEAVE(users.UserId, process.Pid, process.Subject(SessionOperationMessage))
+  JOIN(users.UserId, process.Pid, process.Subject(SessionOperationMessage))
+  UPDATENAME(users.UserId, String, process.Subject(SessionOperationMessage))
   UPDATECAPACITY(
-    users.User,
+    users.UserId,
     rooms.RoomCapacity,
     process.Subject(SessionOperationMessage),
   )
   ANNOUNCE(
-    users.User,
+    users.UserId,
     rooms.RoomAnouncement,
     process.Subject(SessionOperationMessage),
   )
-  REMOVEMEMBER(users.User, process.Subject(SessionOperationMessage))
+  REMOVEMEMBER(users.UserId, process.Subject(SessionOperationMessage))
   // TODO -> fleshout this functionality later
   //MEMBERTIMEOUT(
-  //  users.User,
+  //  users.UserId,
   //  duration.Duration,
   //  process.Subject(SessionOperationMessage),
   //)
