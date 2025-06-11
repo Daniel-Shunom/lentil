@@ -10,17 +10,17 @@ import lntl_server/routes/routes_profile
 import wisp
 import wisp/wisp_mist
 
-pub fn router(req, str: String) {
+pub fn router(req, str: String, ctx: ctx.Context) {
+  let handler = server_routing(_, ctx)
   case wisp.path_segments(req) {
     ["rooms", "joinroom", roomid] -> {
       routes_chat.handle_websockets(req, roomid)
     }
-    _ -> wisp_mist.handler(server_routing, str)(req)
+    _ -> wisp_mist.handler(handler, str)(req)
   }
 }
 
-fn server_routing(req: wisp.Request) -> wisp.Response {
-  let ctx = ctx.get_context()
+fn server_routing(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use req, ctx <- middleware(req, ctx)
   case wisp.path_segments(req) {
     [] -> wisp.accepted()

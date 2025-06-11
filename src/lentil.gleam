@@ -1,4 +1,5 @@
 import gleam/erlang/process
+import global/ctx/ctx.{get_context}
 import global/functions.{get_env, initialize_env}
 import lntl_server/router/router.{router}
 import mist
@@ -8,9 +9,10 @@ pub fn main() {
   wisp.configure_logger()
   initialize_env()
   let sec = get_env("SECRET")
+  let ctx = get_context()
 
   let assert Ok(_) =
-    router(_, sec)
+    router(_, sec, ctx)
     |> mist.new()
     |> mist.port(8000)
     |> mist.start_http()
