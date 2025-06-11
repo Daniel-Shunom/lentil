@@ -56,8 +56,7 @@ pub fn id_generator(prefix: String) -> String {
 pub fn hasher(str: String) -> String {
   bit_array.from_string(str)
   |> crypto.hash(Sha512, _)
-  |> bit_array.to_string
-  |> result.unwrap(str)
+  |> bit_array.base64_encode(True)
 }
 
 pub fn connect_lentildb() -> pog.Connection {
@@ -77,7 +76,7 @@ fn lentildb_config() -> pog.Config {
     password: Some(get_env("PGPASSWORD")),
     ssl: pog.SslDisabled,
     connection_parameters: [],
-    pool_size: 50,
+    pool_size: 10,
     queue_target: 50,
     queue_interval: 1000,
     idle_interval: 1000,
