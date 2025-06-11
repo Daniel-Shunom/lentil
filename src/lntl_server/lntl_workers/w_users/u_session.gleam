@@ -18,6 +18,7 @@ pub type UserSessionRegistryMessage {
     reply_to: process.Subject(wt.SessionOperationMessage),
   )
   EXIT(String)
+  KILL(String)
   START(
     user: users.User,
     user_subj: process.Subject(wt.SessionOperationMessage),
@@ -71,6 +72,11 @@ fn user_supervisor_handler(
       }
     }
     EXIT(session_id) -> {
+      let children2 = dict.delete(state.children, session_id)
+      wisp.log_error("UserSession #{session_id} crashed")
+      actor.continue(UserSessionRegistryState(..state, children: children2))
+    }
+    KILL(session_id) -> {
       let children2 = dict.delete(state.children, session_id)
       wisp.log_error("UserSession #{session_id} crashed")
       actor.continue(UserSessionRegistryState(..state, children: children2))
