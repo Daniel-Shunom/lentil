@@ -16,7 +16,7 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
     Error(_) -> wisp.response(400)
     Ok(Credentials(uname, pswd)) -> {
       case is_user(uname, pswd, ctx) {
-        None -> wisp.response(404)
+        None -> wisp.response(400)
         Some(valid_user) -> {
           let _day = 60 * 60 * 24
           ctx.ADD(valid_user)
@@ -32,7 +32,7 @@ pub fn handle_auth_signout(req: wisp.Request, ctx: ctx.Context) -> wisp.Response
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
   case decode.run(json, id_decoder()) {
-    Error(_) -> wisp.bad_request()
+    Error(_) -> wisp.response(400)
     Ok(userid) -> {
       ctx.REM(userid)
       |> actor.send(ctx.supbox, _)
@@ -48,7 +48,7 @@ fn is_user(
 ) -> Option(User) {
   let hashed_p = hasher(pswd)
   let hashed_u = hasher(unm)
-  case sql.fetch_user(ctx.db_connection, hashed_p, hashed_u) {
+  case sql.fetch_user(ctx.db_connection, hashed_u, hashed_p) {
     Error(_) -> None
     Ok(query_res) -> {
       case list.first(query_res.rows) {
