@@ -20,7 +20,7 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
         Some(valid_user) -> {
           let _day = 60 * 60 * 24
           ctx.ADD(valid_user)
-          |> actor.send(ctx.supbox, _)
+          |> actor.send(ctx.usersupbox, _)
           wisp.response(200)
         }
       }
@@ -35,7 +35,7 @@ pub fn handle_auth_signout(req: wisp.Request, ctx: ctx.Context) -> wisp.Response
     Error(_) -> wisp.response(400)
     Ok(userid) -> {
       ctx.REM(userid)
-      |> actor.send(ctx.supbox, _)
+      |> actor.send(ctx.usersupbox, _)
       wisp.response(200)
     }
   }
