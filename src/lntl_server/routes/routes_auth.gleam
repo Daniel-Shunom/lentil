@@ -5,9 +5,6 @@ import gleam/otp/actor
 import gleam/string
 import global/ctx/ctx
 import global/functions.{hasher}
-import lntl_server/lntl_workers/toolkit/worker_functions as wf
-import lntl_server/lntl_workers/toolkit/worker_types as wt
-import lntl_server/lntl_workers/w_users/u_session as us
 import lntl_server/sql
 import users/types/users.{type User, User}
 import wisp
@@ -21,32 +18,10 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
       case is_user(uname, pswd, ctx) {
         None -> wisp.response(404)
         Some(valid_user) -> {
-          let day = 60 * 60 * 24
-          case wf.create_user_process(valid_user) {
-            Error(_) -> wisp.response(500)
-            Ok(#(user_subject, sessionid)) -> {
-              let msg = fn(reply_to) {
-                us.START(valid_user, user_subject, sessionid, reply_to)
-              }
-              case actor.call(ctx.user_session, msg, 20_000) {
-                // NOTE -> instead of an error message, we let the user check 
-                // through but ensure they have a process going on when they
-                // joining a room, or we retry in the background.
-                wt.FAILURE(_) -> wisp.response(500)
-                wt.SUCCESS(_) -> {
-                  wisp.response(200)
-                  |> wisp.set_cookie(
-                    req,
-                    "session",
-                    sessionid,
-                    wisp.Signed,
-                    day,
-                  )
-                }
-                _ -> wisp.response(500)
-              }
-            }
-          }
+          let _day = 60 * 60 * 24
+          ctx.ADD(valid_user)
+          |> actor.send(ctx.supbox, _)
+          wisp.response(200)
         }
       }
     }
@@ -54,21 +29,14 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
 }
 
 pub fn handle_auth_signout(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
-  case wisp.get_cookie(req, "session", wisp.Signed) {
-    Error(_) -> wisp.response(200)
-    Ok(session_id) -> {
-      let err_msg = "Failure to close session"
-      let func = fn(reply_to) {
-        us.STOP(session_id: session_id, reply_to: reply_to)
-      }
-      case actor.call(ctx.user_session, func, 3000) {
-        wt.SUCCESS(_) -> wisp.response(200)
-        wt.FAILURE(_) -> {
-          wisp.log_error(err_msg)
-          wisp.response(200)
-        }
-        _ -> wisp.response(200)
-      }
+  use <- wisp.require_content_type(req, "application/json")
+  use json <- wisp.require_json(req)
+  case decode.run(json, id_decoder()) {
+    Error(_) -> wisp.bad_request()
+    Ok(userid) -> {
+      ctx.REM(userid)
+      |> actor.send(ctx.supbox, _)
+      wisp.response(200)
     }
   }
 }
@@ -110,6 +78,11 @@ fn credentials_decoder() -> decode.Decoder(Credentials) {
   use username <- decode.field("username", decode.string)
   use password <- decode.field("password", decode.string)
   decode.success(Credentials(username, password))
+}
+
+fn id_decoder() -> decode.Decoder(String) {
+  use userid <- decode.field("userid", decode.string)
+  decode.success(userid)
 }
 
 fn get_gender(str: String) -> users.Gender {
