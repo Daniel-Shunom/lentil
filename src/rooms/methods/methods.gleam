@@ -8,9 +8,9 @@ import rooms/types/rooms
 import users/types/users
 
 pub fn create_room(
-  room_owner owner: users.User,
+  room_owner owner: users.UserId,
   room_name name: String,
-  room_members members: List(users.User),
+  room_members members: List(users.UserId),
   room_capacity capacity: rooms.RoomCapacity,
 ) -> Result(rooms.Room, rooms.RoomCreateError) {
   let is_cap = set_capacity(capacity) - 1 >= list.length(members)
@@ -43,11 +43,11 @@ pub fn create_room(
   }
 }
 
-pub fn get_room_owner(room: rooms.Room) -> users.User {
+pub fn get_room_owner(room: rooms.Room) -> users.UserId {
   room.room_owner
 }
 
-pub fn get_room_members(room: rooms.Room) -> List(users.User) {
+pub fn get_room_members(room: rooms.Room) -> List(users.UserId) {
   room.room_members
 }
 
@@ -69,7 +69,10 @@ pub fn change_room_name(new_name: String, room: rooms.Room) -> rooms.Room {
   )
 }
 
-pub fn change_room_owner(new_owner: users.User, room: rooms.Room) -> rooms.Room {
+pub fn change_room_owner(
+  new_owner: users.UserId,
+  room: rooms.Room,
+) -> rooms.Room {
   let new_time = get_timestamp()
   let new_reason = rooms.CHANGERoomOwner
   rooms.Room(
@@ -101,7 +104,7 @@ pub fn change_room_capacity(
 
 pub fn add_room_member(
   room: rooms.Room,
-  user: users.User,
+  user: users.UserId,
 ) -> Result(rooms.Room, rooms.RoomCreateError) {
   let num_members = list.length(room.room_members)
   case room.room_capacity > num_members {
@@ -126,7 +129,7 @@ pub fn add_room_member(
   }
 }
 
-pub fn remove_room_member(room: rooms.Room, user: users.User) -> rooms.Room {
+pub fn remove_room_member(room: rooms.Room, user: users.UserId) -> rooms.Room {
   let pruned = list.filter(room.room_members, fn(member) { member != user })
   let new_time = get_timestamp()
   rooms.Room(

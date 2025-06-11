@@ -1,5 +1,5 @@
 import global/gtypes.{type LentilTimeStamp}
-import users/types/users.{type User}
+import users/types/users.{type User, type UserId}
 
 pub const small_cap = 128
 
@@ -50,8 +50,8 @@ pub type RoomStatus {
 
 pub type Room {
   Room(
-    room_owner: User,
-    room_members: List(User),
+    room_owner: UserId,
+    room_members: List(UserId),
     room_status: RoomStatus,
     room_capacity: Int,
     room_id: RoomId,
