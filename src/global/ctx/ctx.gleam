@@ -36,7 +36,7 @@ pub type RmMsg {
 }
 
 pub type RmSupMsg {
-  DELROOM(userid: String)
+  DELROOM(sessionid: String)
   NEWROOM(userid: UserId, capacity: rooms.RoomCapacity, roomname: String)
 }
 
@@ -54,9 +54,13 @@ pub fn room_sup_handler(
   state: RmSupState,
 ) -> actor.Next(RmSupMsg, RmSupState) {
   case msg {
-    DELROOM(_) -> todo
-    NEWROOM(user, capacity, name) ->
-      case wf.create_room_process(user, capacity, name) {
+    DELROOM(sessionid) -> {
+      DEL(sessionid)
+      |> actor.send(state.context, _)
+      actor.continue(state)
+    }
+    NEWROOM(userid, capacity, name) ->
+      case wf.create_room_process(userid, capacity, name) {
         Error(_) -> actor.continue(state)
         Ok(#(roomproc, sessionid)) -> {
           NEW(sessionid, roomproc)
