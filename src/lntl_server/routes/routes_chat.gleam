@@ -1,37 +1,50 @@
 import gleam/erlang/process
 import gleam/option.{type Option}
 import gleam/otp/actor
-import global/ctx/ctx
-import lntl_server/lntl_workers/toolkit/worker_types as wt
+import global/ctx/ctx.{type SupMsg}
 import mist
 import users/types/users
+import wisp
 
-pub fn handle_websockets(req, _roomid: String, _ctx: ctx.Context) {
-  mist.websocket(req, ws_handler, on_init, on_close)
+pub fn handle_websockets(req, roomid: String, ctx: ctx.Context) {
+  let handler = fn(state, conn, msg) {
+    ws_handler(state, conn, msg, ctx, roomid)
+  }
+  mist.websocket(req, handler, on_init, on_close)
 }
 
 fn ws_handler(
-  _state: WsState,
+  state: WsState,
   _connection: mist.WebsocketConnection,
-  _message: mist.WebsocketMessage(wt.SessionOperationMessage),
-) -> actor.Next(wt.SessionOperationMessage, WsState) {
-  todo
+  message: mist.WebsocketMessage(SupMsg),
+  context: ctx.Context,
+  roomid: String,
+) -> actor.Next(SupMsg, WsState) {
+  case message {
+    mist.Closed | mist.Shutdown -> {
+      todo
+    }
+    mist.Text(msg_text) -> {
+      ctx.MSG(state.user.user_id, roomid, msg_text)
+      |> actor.send(context.usersupbox, _)
+      actor.continue(state)
+    }
+    _ -> {
+      todo
+    }
+  }
 }
 
 fn on_init(
   _connection: mist.WebsocketConnection,
-) -> #(WsState, Option(process.Selector(wt.SessionOperationMessage))) {
+) -> #(WsState, Option(process.Selector(SupMsg))) {
   todo
 }
 
-fn on_close(_state: WsState) -> Nil {
-  todo
+fn on_close(_) -> Nil {
+  wisp.log_info("Closed socket")
 }
 
 pub type WsState {
-  WsState(
-    user: users.User,
-    user_subj: process.Subject(wt.SessionOperationMessage),
-    room_subj: process.Subject(wt.RoomSessionMessage),
-  )
+  WsState(user: users.User)
 }
