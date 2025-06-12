@@ -5,7 +5,6 @@ import gleam/list
 import gleam/otp/actor
 import gleam/set
 import global/functions.{connect_lentildb}
-import global/gtypes
 import lntl_server/lntl_workers/toolkit/constants as m
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import lntl_server/sql
@@ -256,8 +255,8 @@ fn user_session_handler(
 
       actor.continue(session_state)
     }
-    wt.SENDTOROOM(id, message) -> {
-      case dict.get(session_state.member_rooms, id) {
+    wt.SENDTOROOM(roomid, message) -> {
+      case dict.get(session_state.member_rooms, roomid) {
         Error(_) -> {
           wt.FAILURE("Not room member")
           |> actor.send(session_state.task_inbox, _)
@@ -367,9 +366,7 @@ fn get_owned_rooms(user: users.User) -> List(rooms.RoomId) {
   case sql.fetch_room_by_id(connect_lentildb(), user.user_id.id) {
     Error(_) -> []
     Ok(res) -> {
-      list.map(res.rows, fn(val) {
-        rooms.RoomId(id: val.id, created: gtypes.Time(val.created_at))
-      })
+      list.map(res.rows, fn(val) { rooms.RoomId(id: val.id) })
     }
   }
 }
@@ -378,9 +375,7 @@ fn get_member_rooms(user: users.User) -> List(rooms.RoomId) {
   case sql.fetch_user_room_memberships(connect_lentildb(), user.user_id.id) {
     Error(_) -> []
     Ok(res) -> {
-      list.map(res.rows, fn(val) {
-        rooms.RoomId(id: val.room_id, created: gtypes.Time(val.joined_at))
-      })
+      list.map(res.rows, fn(val) { rooms.RoomId(id: val.room_id) })
     }
   }
 }
