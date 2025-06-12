@@ -29,10 +29,7 @@ pub fn create_room(
               room_members: [owner, ..members],
               room_status: rooms.CREATED(time: create_time),
               room_capacity: set_capacity(capacity),
-              room_id: rooms.RoomId(
-                id: generate_room_id(),
-                created: create_time,
-              ),
+              room_id: rooms.RoomId(id: generate_room_id()),
               room_name: name,
               room_announcements: [],
             ),
