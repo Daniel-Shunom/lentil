@@ -2,9 +2,11 @@ import gleam/dict
 import gleam/erlang/process.{type Subject}
 import gleam/otp/actor
 import gleam/otp/task
-import global/functions.{connect_lentildb}
+import global/functions.{connect_lentildb, get_timestamp, id_generator}
 import lntl_server/lntl_workers/toolkit/worker_functions as wf
 import lntl_server/lntl_workers/toolkit/worker_types as wt
+import messages/methods/methods
+import messages/types/msg
 import pog
 import rooms/types/rooms
 import users/types/users.{type User, type UserId, User, UserId}
@@ -23,10 +25,12 @@ pub type Context {
 pub type SupMsg {
   ADD(User)
   REM(String)
+  MSG(userid: UserId, roomid: String, message: String)
 }
 
 pub type CtxMsg {
   AddToCtx(userid: String, usersubj: Subject(wt.SessionOperationMessage))
+  MsgToUserProc(userid: String, roomid: String, roommessage: String)
   DelFrmCtx(userid: String)
 }
 
@@ -127,6 +131,25 @@ fn ctx_handler(msg: CtxMsg, state: CtxState) -> actor.Next(CtxMsg, CtxState) {
           }
         }
       }
+    MsgToUserProc(userid, roomid, message) -> {
+      case dict.get(state.registry, userid) {
+        Error(_) -> actor.continue(state)
+        Ok(usersession) -> {
+          let msgid = id_generator("lntl-msg")
+          let new_msessage =
+            methods.create_message(
+              msgid,
+              message,
+              users.UserId(userid),
+              get_timestamp(),
+              msg.QUEUED,
+            )
+          wt.SENDTOROOM(rooms.RoomId(roomid), new_msessage)
+          |> actor.send(usersession, _)
+          actor.continue(state)
+        }
+      }
+    }
   }
 }
 
@@ -152,6 +175,11 @@ fn sup_handler(msg: SupMsg, state: SupState) -> actor.Next(SupMsg, SupState) {
       }
     REM(userid) -> {
       DelFrmCtx(userid)
+      |> actor.send(state.ctx, _)
+      actor.continue(state)
+    }
+    MSG(userid, roomid, message) -> {
+      MsgToUserProc(userid.id, roomid, message)
       |> actor.send(state.ctx, _)
       actor.continue(state)
     }
