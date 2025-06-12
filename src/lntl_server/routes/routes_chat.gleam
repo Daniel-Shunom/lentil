@@ -21,6 +21,7 @@ fn ws_handler(
   context: ctx.Context,
   roomid: String,
 ) -> actor.Next(SupMsg, WsState) {
+  // TODO -> validate the roomid
   case message {
     mist.Closed | mist.Shutdown -> actor.Stop(process.Normal)
     mist.Text(msg_text) -> {
@@ -36,6 +37,7 @@ fn on_init(
   _connection: mist.WebsocketConnection,
   userid: String,
 ) -> #(WsState, Option(process.Selector(SupMsg))) {
+  // TODO -> validate this userid
   #(WsState(users.UserId(userid)), None)
 }
 
