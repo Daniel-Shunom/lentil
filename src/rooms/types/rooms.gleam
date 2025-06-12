@@ -33,7 +33,7 @@ pub type RoomCapacity {
 }
 
 pub type RoomId {
-  RoomId(id: String, created: LentilTimeStamp)
+  RoomId(id: String)
 }
 
 pub type RoomAnouncement {
