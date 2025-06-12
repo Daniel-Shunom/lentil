@@ -9,7 +9,7 @@ import messages/methods/methods
 import messages/types/msg
 import pog
 import rooms/types/rooms
-import users/types/users.{type User, type UserId, User, UserId}
+import users/types/users.{type User, type UserId}
 
 // Public Types / APIs
 
@@ -35,7 +35,7 @@ pub type CtxMsg {
 }
 
 pub type RmMsg {
-  NEW(sessionid: String, Subject(wt.RoomSessionMessage))
+  NEW(sessionid: String, sessionmailbox: Subject(wt.RoomSessionMessage))
   DEL(sessionid: String)
 }
 
