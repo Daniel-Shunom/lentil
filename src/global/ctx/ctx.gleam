@@ -77,6 +77,10 @@ pub fn room_sup_handler(
 
 // Private Types
 
+// TODO -> currently messages go too far downstream before validation occurs. I think that
+// is unnecessary and we can shorten that step by moving the registry upstream by one actor
+// layer
+
 type CtxState {
   CtxState(registry: dict.Dict(String, Subject(wt.SessionOperationMessage)))
 }
