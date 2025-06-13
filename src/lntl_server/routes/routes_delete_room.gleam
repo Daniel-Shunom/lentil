@@ -2,6 +2,7 @@ import gleam/dynamic/decode
 import gleam/otp/actor
 import gleam/otp/task
 import global/ctx/ctx
+import global/ctx/types as t
 import lntl_server/sql
 import wisp
 
@@ -16,7 +17,7 @@ pub fn handle_delete_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
         Ok(_) -> {
           let task =
             fn() {
-              ctx.DELROOM(roomsessionid)
+              t.DELROOM(roomsessionid)
               |> actor.send(ctx.roomsupbox, _)
             }
             |> task.async()
