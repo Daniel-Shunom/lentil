@@ -1,4 +1,5 @@
 import gleam/dynamic/decode
+import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
@@ -19,9 +20,16 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
         None -> wisp.response(400)
         Some(valid_user) -> {
           let _day = 60 * 60 * 24
+          let userid = #("userid", json.string(valid_user.user_id.id))
+          let userauth = #("authenticated", json.bool(valid_user.user_auth))
           ctx.ADD(valid_user)
           |> actor.send(ctx.usersupbox, _)
-          wisp.response(200)
+          list.new()
+          |> list.prepend(userauth)
+          |> list.prepend(userid)
+          |> json.object()
+          |> json.to_string_tree()
+          |> wisp.json_response(200)
         }
       }
     }
