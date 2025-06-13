@@ -33,11 +33,23 @@ pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) 
           response.new(400)
           |> response.set_body(mist.Bytes(btree))
         }
-        _ -> {
-          let handler = fn(state, conn, msg) {
-            ws_handler(state, conn, msg, ctx, roomid, userid)
+        [val, ..] -> {
+          case val.in_room {
+            False -> {
+              let btree =
+                "Connection not allowed"
+                |> bytes_tree.from_string()
+
+              response.new(400)
+              |> response.set_body(mist.Bytes(btree))
+            }
+            True -> {
+              let handler = fn(state, conn, msg) {
+                ws_handler(state, conn, msg, ctx, roomid)
+              }
+              mist.websocket(req, handler, on_init(_, userid), on_close)
+            }
           }
-          mist.websocket(req, handler, on_init(_, userid), on_close)
         }
       }
     }
@@ -50,27 +62,15 @@ fn ws_handler(
   message: mist.WebsocketMessage(SupMsg),
   context: ctx.Context,
   roomid: String,
-  userid: String,
 ) -> actor.Next(SupMsg, WsState) {
-  // probably unnecessary but it is what it is
-  case sql.fetch_is_valid_message(context.db_connection, roomid, userid) {
-    Error(_) -> actor.Stop(process.Normal)
-    Ok(pog.Returned(_, value)) -> {
-      case value {
-        [] -> actor.Stop(process.Normal)
-        _ -> {
-          case message {
-            mist.Closed | mist.Shutdown -> actor.Stop(process.Normal)
-            mist.Text(msg_text) -> {
-              t.MSG(state.userid, roomid, msg_text)
-              |> actor.send(context.usersupbox, _)
-              actor.continue(state)
-            }
-            _ -> actor.continue(state)
-          }
-        }
-      }
+  case message {
+    mist.Closed | mist.Shutdown -> actor.Stop(process.Normal)
+    mist.Text(msg_text) -> {
+      t.MSG(state.userid, roomid, msg_text)
+      |> actor.send(context.usersupbox, _)
+      actor.continue(state)
     }
+    _ -> actor.continue(state)
   }
 }
 
