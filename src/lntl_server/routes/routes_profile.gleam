@@ -41,7 +41,14 @@ pub fn handle_get_profile(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
                   |> option.unwrap(False)
                   |> json.bool(),
               )
-              [userid, name, username, dob, gender, pronouns, auth]
+              list.new()
+              |> list.prepend(auth)
+              |> list.prepend(pronouns)
+              |> list.prepend(gender)
+              |> list.prepend(dob)
+              |> list.prepend(username)
+              |> list.prepend(name)
+              |> list.prepend(userid)
               |> json.object()
               |> json.to_string_tree()
               |> wisp.json_response(200)
