@@ -1,11 +1,14 @@
 import gleam/dict
 import gleam/erlang/process.{type Subject}
+import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
 import gleam/otp/task
 import global/ctx/types as t
 import global/functions.{connect_lentildb, get_timestamp, id_generator}
 import lntl_server/lntl_workers/toolkit/worker_functions as wf
 import lntl_server/lntl_workers/toolkit/worker_types as wt
+import lntl_server/sql
 import messages/methods/methods
 import messages/types/msg
 import pog
@@ -24,15 +27,36 @@ pub type Context {
 }
 
 pub fn get_context() -> Context {
+  let connection = connect_lentildb()
   let roombox = rmctxprx()
   let roomsup = room_supervisor(roombox)
   let usersup = sup_ctx(roombox)
-  Context(
-    connection_registry: dict.new(),
-    db_connection: connect_lentildb(),
-    usersupbox: usersup,
-    roomsupbox: roomsup,
-  )
+  case get_rooms(connection) {
+    None -> {
+      Context(
+        connection_registry: dict.new(),
+        db_connection: connection,
+        usersupbox: usersup,
+        roomsupbox: roomsup,
+      )
+    }
+    Some(listofinstructions) -> {
+      let _ =
+        task.async(fn() {
+          listofinstructions
+          |> list.each(fn(instruction) {
+            instruction
+            |> actor.send(roomsup, _)
+          })
+        })
+      Context(
+        connection_registry: dict.new(),
+        db_connection: connection,
+        usersupbox: usersup,
+        roomsupbox: roomsup,
+      )
+    }
+  }
 }
 
 pub fn room_sup_handler(
@@ -222,4 +246,36 @@ fn room_supervisor(roombox: Subject(t.RmMsg)) -> Subject(t.RmSupMsg) {
     t.RmSupState(process.new_subject(), roombox)
     |> actor.start(room_sup_handler)
   room_sup_subj
+}
+
+fn get_rooms(conn: pog.Connection) -> Option(List(t.RmSupMsg)) {
+  let newtask =
+    task.async(fn() {
+      case sql.fetch_all_rooms(conn) {
+        Error(_) -> []
+        Ok(pog.Returned(_, rows)) -> {
+          case rows {
+            [] -> []
+            _ -> {
+              list.map(rows, fn(x) {
+                t.NEWROOM(users.UserId(x.id), cap(x.capacity), x.name)
+              })
+            }
+          }
+        }
+      }
+    })
+  case task.await_forever(newtask) {
+    [] -> None
+    val -> Some(val)
+  }
+}
+
+fn cap(num: Int) -> rooms.RoomCapacity {
+  case num {
+    128 -> rooms.SMALL
+    256 -> rooms.MEDIUM
+    512 -> rooms.LARGE
+    _ -> rooms.SMALL
+  }
 }
