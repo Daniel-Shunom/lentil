@@ -558,6 +558,46 @@ SELECT
   |> pog.execute(db)
 }
 
+/// A row you get from running the `fetch_is_valid_message` query
+/// defined in `./src/lntl_server/sql/fetch_is_valid_message.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v3.0.4 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type FetchIsValidMessageRow {
+  FetchIsValidMessageRow(in_room: Bool)
+}
+
+/// name: user_in_room :one
+/// Return true if the room exists and the user is a member of it
+///
+/// > 🐿️ This function was generated automatically using v3.0.4 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn fetch_is_valid_message(db, arg_1, arg_2) {
+  let decoder = {
+    use in_room <- decode.field(0, decode.bool)
+    decode.success(FetchIsValidMessageRow(in_room:))
+  }
+
+  "-- name: user_in_room :one
+-- Return true if the room exists and the user is a member of it
+SELECT
+  EXISTS (
+    SELECT 1
+      FROM lntl.room_members
+     WHERE room_id = $1
+       AND user_id = $2
+  ) AS in_room
+;
+"
+  |> pog.query
+  |> pog.parameter(pog.text(arg_1))
+  |> pog.parameter(pog.text(arg_2))
+  |> pog.returning(decoder)
+  |> pog.execute(db)
+}
+
 /// A row you get from running the `fetch_all_rooms` query
 /// defined in `./src/lntl_server/sql/fetch_all_rooms.sql`.
 ///

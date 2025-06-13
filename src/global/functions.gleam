@@ -1,7 +1,7 @@
 import dot_env
 import dot_env/env
 import gleam/bit_array
-import gleam/crypto.{Sha512}
+import gleam/crypto.{Sha256, Sha512}
 import gleam/int
 import gleam/option.{Some}
 import gleam/result
@@ -35,6 +35,11 @@ pub fn get_timestamp() -> LentilTimeStamp {
 }
 
 pub fn id_generator(prefix: String) -> String {
+  let thasher = fn(str: String) {
+    bit_array.from_string(str)
+    |> crypto.hash(Sha256, _)
+    |> bit_array.base16_encode()
+  }
   let str = random.fixed_size_string(32)
   let num = random.int(0, 100_000)
   let secure_prefix =
@@ -50,7 +55,7 @@ pub fn id_generator(prefix: String) -> String {
     |> seed.new()
     |> random.sample(str, _)
 
-  prefix <> secure_prefix <> secure_id
+  prefix <> secure_prefix <> thasher(secure_id)
 }
 
 pub fn hasher(str: String) -> String {

@@ -33,6 +33,7 @@ pub fn get_context() -> Context {
   let usersup = sup_ctx(roombox)
   case get_rooms(connection) {
     None -> {
+      echo "No rooms in DB"
       Context(
         connection_registry: dict.new(),
         db_connection: connection,
@@ -45,6 +46,7 @@ pub fn get_context() -> Context {
         task.async(fn() {
           listofinstructions
           |> list.each(fn(instruction) {
+            echo instruction
             instruction
             |> actor.send(roomsup, _)
           })
@@ -258,6 +260,7 @@ fn get_rooms(conn: pog.Connection) -> Option(List(t.RmSupMsg)) {
             [] -> []
             _ -> {
               list.map(rows, fn(x) {
+                echo x
                 t.NEWROOM(users.UserId(x.id), cap(x.capacity), x.name)
               })
             }
