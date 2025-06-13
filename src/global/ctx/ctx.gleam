@@ -2,6 +2,7 @@ import gleam/dict
 import gleam/erlang/process.{type Subject}
 import gleam/otp/actor
 import gleam/otp/task
+import global/ctx/types as t
 import global/functions.{connect_lentildb, get_timestamp, id_generator}
 import lntl_server/lntl_workers/toolkit/worker_functions as wf
 import lntl_server/lntl_workers/toolkit/worker_types as wt
@@ -9,7 +10,7 @@ import messages/methods/methods
 import messages/types/msg
 import pog
 import rooms/types/rooms
-import users/types/users.{type User, type UserId}
+import users/types/users
 
 // Public Types / APIs
 
@@ -17,57 +18,38 @@ pub type Context {
   Context(
     connection_registry: dict.Dict(rooms.RoomId, String),
     db_connection: pog.Connection,
-    usersupbox: Subject(SupMsg),
-    roomsupbox: Subject(RmSupMsg),
+    usersupbox: Subject(t.SupMsg),
+    roomsupbox: Subject(t.RmSupMsg),
   )
 }
 
-pub type SupMsg {
-  ADD(User)
-  REM(String)
-  MSG(userid: UserId, roomid: String, message: String)
-}
-
-pub type CtxMsg {
-  AddToCtx(userid: String, usersubj: Subject(wt.SessionOperationMessage))
-  MsgToUserProc(userid: String, roomid: String, roommessage: String)
-  DelFrmCtx(userid: String)
-}
-
-pub type RmMsg {
-  NEW(sessionid: String, sessionmailbox: Subject(wt.RoomSessionMessage))
-  DEL(sessionid: String)
-}
-
-pub type RmSupMsg {
-  DELROOM(sessionid: String)
-  NEWROOM(userid: UserId, capacity: rooms.RoomCapacity, roomname: String)
-}
-
 pub fn get_context() -> Context {
+  let roombox = rmctxprx()
+  let roomsup = room_supervisor(roombox)
+  let usersup = sup_ctx(roombox)
   Context(
     connection_registry: dict.new(),
     db_connection: connect_lentildb(),
-    usersupbox: sup_ctx(),
-    roomsupbox: room_supervisor(),
+    usersupbox: usersup,
+    roomsupbox: roomsup,
   )
 }
 
 pub fn room_sup_handler(
-  msg: RmSupMsg,
-  state: RmSupState,
-) -> actor.Next(RmSupMsg, RmSupState) {
+  msg: t.RmSupMsg,
+  state: t.RmSupState,
+) -> actor.Next(t.RmSupMsg, t.RmSupState) {
   case msg {
-    DELROOM(sessionid) -> {
-      DEL(sessionid)
+    t.DELROOM(sessionid) -> {
+      t.DEL(sessionid)
       |> actor.send(state.context, _)
       actor.continue(state)
     }
-    NEWROOM(userid, capacity, name) ->
+    t.NEWROOM(userid, capacity, name) ->
       case wf.create_room_process(userid, capacity, name) {
         Error(_) -> actor.continue(state)
         Ok(#(roomproc, sessionid)) -> {
-          NEW(sessionid, roomproc)
+          t.NEW(sessionid, roomproc)
           |> actor.send(state.context, _)
           actor.continue(state)
         }
@@ -81,34 +63,21 @@ pub fn room_sup_handler(
 // is unnecessary and we can shorten that step by moving the registry upstream by one actor
 // layer
 
-type CtxState {
-  CtxState(registry: dict.Dict(String, Subject(wt.SessionOperationMessage)))
-}
-
-type SupState {
-  SupState(supbox: Subject(SupMsg), ctx: Subject(CtxMsg))
-}
-
-type RmState {
-  RmState(registry: dict.Dict(String, Subject(wt.RoomSessionMessage)))
-}
-
-pub type RmSupState {
-  RmSupState(room_supervisorbox: Subject(RmSupMsg), context: Subject(RmMsg))
-}
-
 // Context Functions
 
-fn ctx() -> Subject(CtxMsg) {
+fn ctx() -> Subject(t.CtxMsg) {
   let assert Ok(ctx_subj) =
-    CtxState(dict.new())
+    t.CtxState(dict.new())
     |> actor.start(ctx_handler)
   ctx_subj
 }
 
-fn ctx_handler(msg: CtxMsg, state: CtxState) -> actor.Next(CtxMsg, CtxState) {
+fn ctx_handler(
+  msg: t.CtxMsg,
+  state: t.CtxState,
+) -> actor.Next(t.CtxMsg, t.CtxState) {
   case msg {
-    AddToCtx(userid, usersubj) ->
+    t.AddToCtx(userid, usersubj) ->
       case dict.has_key(state.registry, userid) {
         True -> {
           echo state.registry
@@ -116,12 +85,12 @@ fn ctx_handler(msg: CtxMsg, state: CtxState) -> actor.Next(CtxMsg, CtxState) {
         }
         False -> {
           let new_state =
-            CtxState(dict.insert(state.registry, userid, usersubj))
+            t.CtxState(dict.insert(state.registry, userid, usersubj))
           echo new_state.registry
           actor.continue(new_state)
         }
       }
-    DelFrmCtx(userid) ->
+    t.DelFrmCtx(userid) ->
       case dict.get(state.registry, userid) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
@@ -129,13 +98,13 @@ fn ctx_handler(msg: CtxMsg, state: CtxState) -> actor.Next(CtxMsg, CtxState) {
           case task.try_await(task, 1000) {
             Error(_) -> actor.continue(state)
             Ok(_) -> {
-              let new_state = CtxState(dict.delete(state.registry, userid))
+              let new_state = t.CtxState(dict.delete(state.registry, userid))
               actor.continue(new_state)
             }
           }
         }
       }
-    MsgToUserProc(userid, roomid, message) -> {
+    t.MsgToUserProc(userid, roomid, message) -> {
       case dict.get(state.registry, roomid) {
         Error(val) -> {
           echo val
@@ -163,31 +132,34 @@ fn ctx_handler(msg: CtxMsg, state: CtxState) -> actor.Next(CtxMsg, CtxState) {
 
 // Supervisor Functions
 
-fn sup_ctx() -> Subject(SupMsg) {
+fn sup_ctx(roomsupbox: Subject(t.RmMsg)) -> Subject(t.SupMsg) {
   let assert Ok(sup_subj) =
-    SupState(process.new_subject(), ctx())
+    t.SupState(process.new_subject(), ctx(), roomsupbox:)
     |> actor.start(sup_handler)
   sup_subj
 }
 
-fn sup_handler(msg: SupMsg, state: SupState) -> actor.Next(SupMsg, SupState) {
+fn sup_handler(
+  msg: t.SupMsg,
+  state: t.SupState,
+) -> actor.Next(t.SupMsg, t.SupState) {
   case msg {
-    ADD(user) ->
-      case wf.create_user_process(user) {
+    t.ADD(user) ->
+      case wf.create_user_process(user, state.roomsupbox) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
-          AddToCtx(user.user_id.id, subj.0)
+          t.AddToCtx(user.user_id.id, subj.0)
           |> actor.send(state.ctx, _)
           actor.continue(state)
         }
       }
-    REM(userid) -> {
-      DelFrmCtx(userid)
+    t.REM(userid) -> {
+      t.DelFrmCtx(userid)
       |> actor.send(state.ctx, _)
       actor.continue(state)
     }
-    MSG(userid, roomid, message) -> {
-      MsgToUserProc(userid.id, roomid, message)
+    t.MSG(userid, roomid, message) -> {
+      t.MsgToUserProc(userid.id, roomid, message)
       |> actor.send(state.ctx, _)
       actor.continue(state)
     }
@@ -196,24 +168,25 @@ fn sup_handler(msg: SupMsg, state: SupState) -> actor.Next(SupMsg, SupState) {
 
 // Room Context Functions
 
-fn rmctxprx() -> Subject(RmMsg) {
+fn rmctxprx() -> Subject(t.RmMsg) {
   let assert Ok(rmsubj) =
-    RmState(dict.new())
+    t.RmState(dict.new())
     |> actor.start(rmhandler)
   rmsubj
 }
 
-fn rmhandler(msg: RmMsg, state: RmState) -> actor.Next(RmMsg, RmState) {
+fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
   case msg {
-    NEW(roomid, roomsubj) ->
+    t.NEW(roomid, roomsubj) ->
       case dict.has_key(state.registry, roomid) {
         True -> actor.continue(state)
         False -> {
-          let new_state = RmState(dict.insert(state.registry, roomid, roomsubj))
+          let new_state =
+            t.RmState(dict.insert(state.registry, roomid, roomsubj))
           actor.continue(new_state)
         }
       }
-    DEL(roomid) ->
+    t.DEL(roomid) ->
       case dict.get(state.registry, roomid) {
         Error(_) -> actor.continue(state)
         Ok(roomsubj) -> {
@@ -224,20 +197,29 @@ fn rmhandler(msg: RmMsg, state: RmState) -> actor.Next(RmMsg, RmState) {
             Error(_) -> actor.continue(state)
             Ok(_) -> {
               let new_registry = dict.delete(state.registry, roomid)
-              let new_state = RmState(new_registry)
+              let new_state = t.RmState(new_registry)
               actor.continue(new_state)
             }
           }
         }
       }
+    t.SEND(roomid, msg) -> {
+      case dict.get(state.registry, roomid) {
+        Error(_) -> actor.continue(state)
+        Ok(roomsubj) -> {
+          actor.send(roomsubj, msg)
+          actor.continue(state)
+        }
+      }
+    }
   }
 }
 
 // Room Supervisor Functions
 
-fn room_supervisor() -> Subject(RmSupMsg) {
+fn room_supervisor(roombox: Subject(t.RmMsg)) -> Subject(t.RmSupMsg) {
   let assert Ok(room_sup_subj) =
-    RmSupState(process.new_subject(), rmctxprx())
+    t.RmSupState(process.new_subject(), roombox)
     |> actor.start(room_sup_handler)
   room_sup_subj
 }

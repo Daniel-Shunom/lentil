@@ -4,6 +4,7 @@ import gleam/int
 import gleam/list
 import gleam/otp/actor
 import gleam/set
+import global/ctx/types as t
 import global/functions.{connect_lentildb}
 import lntl_server/lntl_workers/toolkit/constants as m
 import lntl_server/lntl_workers/toolkit/worker_types as wt
@@ -29,11 +30,12 @@ pub fn create_room_process(
 
 pub fn create_user_process(
   user: users.User,
+  roomsupbox: process.Subject(t.RmMsg),
 ) -> Result(
   #(process.Subject(wt.SessionOperationMessage), String),
   users.USERCREATIONERROR,
 ) {
-  create_user_process_helper(user)
+  create_user_process_helper(user, roomsupbox)
 }
 
 fn room_session_handler(
@@ -239,6 +241,7 @@ fn room_session_handler(
 fn user_session_handler(
   session_message: wt.SessionOperationMessage,
   session_state: wt.UserSession,
+  roombox: process.Subject(t.RmMsg),
 ) -> actor.Next(wt.SessionOperationMessage, wt.UserSession) {
   case session_message {
     wt.CLOSESESSION -> actor.Stop(process.Normal)
@@ -254,26 +257,10 @@ fn user_session_handler(
       }
     }
     wt.SENDTOROOM(roomid, message) -> {
-      case dict.get(session_state.member_rooms, roomid) {
-        Error(_) -> {
-          wt.FAILURE("Not room member")
-          |> actor.send(session_state.task_inbox, _)
-          actor.continue(session_state)
-        }
-        Ok(room_mailbox) -> {
-          let new_message = msg.Message(..message, message_code: msg.QUEUED)
-          let q =
-            session_state.queue.msg_queue
-            |> list.append([new_message])
-          let new_msg_queue =
-            msg.MessageQueue(..session_state.queue, msg_queue: q)
-          let new_session =
-            wt.UserSession(..session_state, queue: new_msg_queue)
-          wt.SENDMESSAGE(new_message, session_state.task_inbox)
-          |> actor.send(room_mailbox, _)
-          actor.continue(new_session)
-        }
-      }
+      wt.SENDMESSAGE(message, session_state.task_inbox)
+      |> t.SEND(roomid.id, _)
+      |> actor.send(roombox, _)
+      actor.continue(session_state)
     }
     wt.ADDROOM(id, mailbox) -> {
       let new_rooms =
@@ -333,6 +320,7 @@ fn create_room_process_helper(
 
 fn create_user_process_helper(
   user: users.User,
+  roomsupbox: process.Subject(t.RmMsg),
 ) -> Result(
   #(process.Subject(wt.SessionOperationMessage), String),
   users.USERCREATIONERROR,
@@ -354,8 +342,10 @@ fn create_user_process_helper(
       task_inbox: inbox,
       owned_rooms: owned,
     )
-  let assert Ok(new_process) =
-    actor.start(new_user_session, user_session_handler)
+  let handler = fn(message, session) {
+    user_session_handler(message, session, roomsupbox)
+  }
+  let assert Ok(new_process) = actor.start(new_user_session, handler)
   #(new_process, new_session_id)
   |> Ok()
 }

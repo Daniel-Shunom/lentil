@@ -2,7 +2,8 @@ import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/option.{type Option, None}
 import gleam/otp/actor
-import global/ctx/ctx.{type SupMsg}
+import global/ctx/ctx
+import global/ctx/types.{type SupMsg} as t
 import mist
 import users/types/users
 import wisp
@@ -25,7 +26,7 @@ fn ws_handler(
   case message {
     mist.Closed | mist.Shutdown -> actor.Stop(process.Normal)
     mist.Text(msg_text) -> {
-      ctx.MSG(state.userid, roomid, msg_text)
+      t.MSG(state.userid, roomid, msg_text)
       |> actor.send(context.usersupbox, _)
       actor.continue(state)
     }

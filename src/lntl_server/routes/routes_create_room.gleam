@@ -4,6 +4,7 @@ import gleam/list
 import gleam/otp/actor
 import gleam/string
 import global/ctx/ctx
+import global/ctx/types as t
 import global/functions.{id_generator}
 import lntl_server/sql
 import rooms/types/rooms.{type RoomCapacity}
@@ -28,7 +29,7 @@ pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
       {
         Error(_) -> wisp.response(400)
         Ok(_) -> {
-          ctx.NEWROOM(UserId(ownerid), capacity, roomname)
+          t.NEWROOM(UserId(ownerid), capacity, roomname)
           |> actor.send(ctx.roomsupbox, _)
           let roomid = #("roomid", json.string(roomid))
           let roomname = #("roomname", json.string(roomname))
