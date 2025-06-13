@@ -252,8 +252,6 @@ fn user_session_handler(
           actor.continue(new_state)
         }
       }
-
-      actor.continue(session_state)
     }
     wt.SENDTOROOM(roomid, message) -> {
       case dict.get(session_state.member_rooms, roomid) {
