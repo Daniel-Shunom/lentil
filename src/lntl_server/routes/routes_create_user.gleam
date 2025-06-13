@@ -1,13 +1,12 @@
 import gleam/dynamic/decode
 
-// import gleam/json
+import gleam/json
 import gleam/list
 import gleam/otp/task
 import gleam/string
 import global/ctx/ctx
 import global/functions.{hasher}
 
-// import lntl_server/routes/routes_auth
 import lntl_server/sql
 import users/methods/methods.{create_user}
 import users/types/users
@@ -51,17 +50,15 @@ pub fn handle_create_user(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
               echo msg
               wisp.response(500)
             }
-            Ok(SUCCESS(DETS(_unm, _psd))) -> {
-              // SEE IF YOU CAN DO AUTO LOGIN
-              //let username = #("username", json.string(unm))
-              //let password = #("password", json.string(psd))
-              //let new_req = list.new()
-              //|> list.prepend(password)
-              //|> list.prepend(username)
-              //|> json.object()
-              //|> json.to_string_tree()
-              //|> wisp.json_response(200)
-              wisp.response(200)
+            Ok(SUCCESS(DETS(unm, _psd, id))) -> {
+              let username = #("username", json.string(unm))
+              let userid = #("userid", json.string(id))
+              list.new()
+              |> list.prepend(username)
+              |> list.prepend(userid)
+              |> json.object()
+              |> json.to_string_tree()
+              |> wisp.json_response(200)
             }
             Ok(ERROR(_)) -> wisp.bad_request()
           }
@@ -172,13 +169,13 @@ fn create_new_user(
       pronouns,
     )
   case response {
-    Ok(_) -> Ok(SUCCESS(DETS(hashedu, hashedp)))
+    Ok(_) -> Ok(SUCCESS(DETS(hashedu, hashedp, id)))
     Error(_) -> Error(ERROR(err))
   }
 }
 
 type DETS {
-  DETS(unm: String, psd: String)
+  DETS(unm: String, psd: String, id: String)
 }
 
 type CreateMsg {
