@@ -7,6 +7,7 @@ import global/ctx/ctx
 import global/ctx/types as t
 import global/functions.{id_generator}
 import lntl_server/sql
+import pog
 import rooms/types/rooms.{type RoomCapacity}
 import users/types/users.{UserId}
 import wisp
@@ -28,17 +29,22 @@ pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
         )
       {
         Error(_) -> wisp.response(400)
-        Ok(_) -> {
-          t.NEWROOM(UserId(ownerid), capacity, roomname)
-          |> actor.send(ctx.roomsupbox, _)
-          let roomid = #("roomid", json.string(roomid))
-          let roomname = #("roomname", json.string(roomname))
-          list.new()
-          |> list.prepend(roomid)
-          |> list.prepend(roomname)
-          |> json.object()
-          |> json.to_string_tree()
-          |> wisp.json_response(200)
+        Ok(pog.Returned(_, rows)) -> {
+          case rows {
+            [] -> wisp.response(400)
+            _ -> {
+              t.NEWROOM(UserId(ownerid), capacity, roomname)
+              |> actor.send(ctx.roomsupbox, _)
+              let roomid = #("roomid", json.string(roomid))
+              let roomname = #("roomname", json.string(roomname))
+              list.new()
+              |> list.prepend(roomid)
+              |> list.prepend(roomname)
+              |> json.object()
+              |> json.to_string_tree()
+              |> wisp.json_response(200)
+            }
+          }
         }
       }
     }
