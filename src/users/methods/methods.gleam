@@ -1,3 +1,5 @@
+import gleam/bit_array
+import gleam/crypto.{Md5}
 import gleam/int
 import prng/random
 import prng/seed
@@ -81,6 +83,11 @@ pub fn update_user_pronouns(
 }
 
 fn generate_user_id() -> String {
+  let thasher = fn(str: String) {
+    bit_array.from_string(str)
+    |> crypto.hash(Md5, _)
+    |> bit_array.base16_encode()
+  }
   let str = random.fixed_size_string(32)
   let num = random.int(0, 100_000)
   let secure_prefix =
@@ -96,5 +103,5 @@ fn generate_user_id() -> String {
     |> seed.new()
     |> random.sample(str, _)
 
-  "lntl-user-" <> secure_prefix <> secure_id
+  "lntl-user-" <> thasher(secure_prefix <> secure_id)
 }
