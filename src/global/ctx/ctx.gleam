@@ -136,8 +136,11 @@ fn ctx_handler(msg: CtxMsg, state: CtxState) -> actor.Next(CtxMsg, CtxState) {
         }
       }
     MsgToUserProc(userid, roomid, message) -> {
-      case dict.get(state.registry, userid) {
-        Error(_) -> actor.continue(state)
+      case dict.get(state.registry, roomid) {
+        Error(val) -> {
+          echo val
+          actor.continue(state)
+        }
         Ok(usersession) -> {
           let msgid = id_generator("lntl-msg")
           let new_msessage =
@@ -148,6 +151,7 @@ fn ctx_handler(msg: CtxMsg, state: CtxState) -> actor.Next(CtxMsg, CtxState) {
               get_timestamp(),
               msg.QUEUED,
             )
+          echo new_msessage
           wt.SENDTOROOM(rooms.RoomId(roomid), new_msessage)
           |> actor.send(usersession, _)
           actor.continue(state)
