@@ -33,7 +33,7 @@ pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
           case rows {
             [] -> wisp.response(400)
             _ -> {
-              t.NEWROOM(UserId(ownerid), capacity, roomname)
+              t.NEWROOM(UserId(ownerid), capacity, roomname, roomid)
               |> actor.send(ctx.roomsupbox, _)
               let roomid = #("roomid", json.string(roomid))
               let roomname = #("roomname", json.string(roomname))

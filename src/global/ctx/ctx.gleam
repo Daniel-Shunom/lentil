@@ -42,15 +42,12 @@ pub fn get_context() -> Context {
       )
     }
     Some(listofinstructions) -> {
-      let _ =
-        task.async(fn() {
-          listofinstructions
-          |> list.each(fn(instruction) {
-            echo instruction
-            instruction
-            |> actor.send(roomsup, _)
-          })
-        })
+      listofinstructions
+      |> list.each(fn(instruction) {
+        echo instruction
+        instruction
+        |> actor.send(roomsup, _)
+      })
       Context(
         connection_registry: dict.new(),
         db_connection: connection,
@@ -71,11 +68,14 @@ pub fn room_sup_handler(
       |> actor.send(state.context, _)
       actor.continue(state)
     }
-    t.NEWROOM(userid, capacity, name) ->
+    t.NEWROOM(userid, capacity, name, roomid) ->
       case wf.create_room_process(userid, capacity, name) {
         Error(_) -> actor.continue(state)
-        Ok(#(roomproc, sessionid)) -> {
-          t.NEW(sessionid, roomproc)
+        Ok(#(roomproc, _)) -> {
+          echo "==========ROOMMSG=========="
+          echo roomid
+          echo roomproc
+          t.NEW(roomid, roomproc)
           |> actor.send(state.context, _)
           actor.continue(state)
         }
@@ -131,7 +131,9 @@ fn ctx_handler(
         }
       }
     t.MsgToUserProc(userid, roomid, message) -> {
-      case dict.get(state.registry, roomid) {
+      echo "CTX_HANDLER::::   " <> message
+
+      case dict.get(state.registry, userid) {
         Error(val) -> {
           echo val
           actor.continue(state)
@@ -146,7 +148,7 @@ fn ctx_handler(
               get_timestamp(),
               msg.QUEUED,
             )
-          echo new_msessage
+          echo "VALIDATEDMESSAGE::::   " <> new_msessage.message_content
           wt.SENDTOROOM(rooms.RoomId(roomid), new_msessage)
           |> actor.send(usersession, _)
           actor.continue(state)
@@ -185,6 +187,7 @@ fn sup_handler(
       actor.continue(state)
     }
     t.MSG(userid, roomid, message) -> {
+      echo "SUP_HANDLER::::   " <> message
       t.MsgToUserProc(userid.id, roomid, message)
       |> actor.send(state.ctx, _)
       actor.continue(state)
@@ -209,6 +212,8 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
         False -> {
           let new_state =
             t.RmState(dict.insert(state.registry, roomid, roomsubj))
+          echo "++++++adding to room registry++++++"
+          echo new_state.registry
           actor.continue(new_state)
         }
       }
@@ -230,9 +235,13 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
         }
       }
     t.SEND(roomid, msg) -> {
+      echo "IN ROOM SUP::::   "
+      echo msg
       case dict.get(state.registry, roomid) {
         Error(_) -> actor.continue(state)
         Ok(roomsubj) -> {
+          echo "ROOMSUBJ::::"
+          echo roomsubj
           actor.send(roomsubj, msg)
           actor.continue(state)
         }
@@ -261,7 +270,7 @@ fn get_rooms(conn: pog.Connection) -> Option(List(t.RmSupMsg)) {
             _ -> {
               list.map(rows, fn(x) {
                 echo x
-                t.NEWROOM(users.UserId(x.id), cap(x.capacity), x.name)
+                t.NEWROOM(users.UserId(x.id), cap(x.capacity), x.name, x.id)
               })
             }
           }

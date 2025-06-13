@@ -6,7 +6,12 @@ import users/types/users.{type User, type UserId}
 
 pub type RmSupMsg {
   DELROOM(sessionid: String)
-  NEWROOM(userid: UserId, capacity: rooms.RoomCapacity, roomname: String)
+  NEWROOM(
+    userid: UserId,
+    capacity: rooms.RoomCapacity,
+    roomname: String,
+    roomid: String,
+  )
 }
 
 pub type SupMsg {

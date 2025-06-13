@@ -62,6 +62,9 @@ fn room_session_handler(
     wt.SENDMESSAGE(message, client) -> {
       let new_message = sanitize_message(message)
       // TODO -> PLEASE FIX THIS!!
+      echo "IN ACTUAL ROOM::::"
+      echo new_message
+      echo client
       let new_bin = list.prepend(session_state.retry_bin, new_message)
       let new_state = wt.RoomSession(..session_state, retry_bin: new_bin)
       wt.MESSAGEDELIVERED(message)
@@ -257,6 +260,8 @@ fn user_session_handler(
       }
     }
     wt.SENDTOROOM(roomid, message) -> {
+      echo "MSG IN USR PROC::::   " <> message.message_content
+      echo message
       wt.SENDMESSAGE(message, session_state.task_inbox)
       |> t.SEND(roomid.id, _)
       |> actor.send(roombox, _)
