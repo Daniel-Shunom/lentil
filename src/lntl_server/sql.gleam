@@ -558,6 +558,71 @@ SELECT
   |> pog.execute(db)
 }
 
+/// A row you get from running the `fetch_all_rooms` query
+/// defined in `./src/lntl_server/sql/fetch_all_rooms.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v3.0.4 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type FetchAllRoomsRow {
+  FetchAllRoomsRow(
+    id: String,
+    owner_id: Option(String),
+    name: String,
+    capacity: Int,
+    status: String,
+    created_at: String,
+    updated_at: String,
+  )
+}
+
+/// name: fetch_all_rooms :many
+/// Return all rooms (most recent first), casting timestamps to TEXT for Squirrel
+///
+/// > 🐿️ This function was generated automatically using v3.0.4 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn fetch_all_rooms(db) {
+  let decoder = {
+    use id <- decode.field(0, decode.string)
+    use owner_id <- decode.field(1, decode.optional(decode.string))
+    use name <- decode.field(2, decode.string)
+    use capacity <- decode.field(3, decode.int)
+    use status <- decode.field(4, decode.string)
+    use created_at <- decode.field(5, decode.string)
+    use updated_at <- decode.field(6, decode.string)
+    decode.success(
+      FetchAllRoomsRow(
+        id:,
+        owner_id:,
+        name:,
+        capacity:,
+        status:,
+        created_at:,
+        updated_at:,
+      ),
+    )
+  }
+
+  "-- name: fetch_all_rooms :many
+-- Return all rooms (most recent first), casting timestamps to TEXT for Squirrel
+SELECT
+  id,
+  owner_id,
+  name,
+  capacity,
+  status,
+  created_at::TEXT   AS created_at,
+  updated_at::TEXT   AS updated_at
+FROM lntl.rooms
+ORDER BY created_at DESC
+;
+"
+  |> pog.query
+  |> pog.returning(decoder)
+  |> pog.execute(db)
+}
+
 /// Runs the `delete_user_session` query
 /// defined in `./src/lntl_server/sql/delete_user_session.sql`.
 ///
