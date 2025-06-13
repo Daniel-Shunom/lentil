@@ -1,4 +1,6 @@
 import gleam/dynamic/decode
+import gleam/json
+import gleam/list
 import gleam/otp/actor
 import gleam/string
 import global/ctx/ctx
@@ -28,7 +30,14 @@ pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
         Ok(_) -> {
           ctx.NEWROOM(UserId(ownerid), capacity, roomname)
           |> actor.send(ctx.roomsupbox, _)
-          wisp.response(200)
+          let roomid = #("roomid", json.string(roomid))
+          let roomname = #("roomname", json.string(roomname))
+          list.new()
+          |> list.prepend(roomid)
+          |> list.prepend(roomname)
+          |> json.object()
+          |> json.to_string_tree()
+          |> wisp.json_response(200)
         }
       }
     }
