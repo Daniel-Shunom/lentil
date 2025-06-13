@@ -902,52 +902,69 @@ RETURNING id;
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type CreateNewRoomRow {
-  CreateNewRoomRow(id: String)
+  CreateNewRoomRow(room_id: String)
 }
 
-/// Runs the `create_new_room` query
-/// defined in `./src/lntl_server/sql/create_new_room.sql`.
+/// name: create_room_with_membership :one
+/// Insert a new room (if the owner exists and name is unique), and
+/// automatically add the owner as a member. Returns the new room ID.
 ///
 /// > 🐿️ This function was generated automatically using v3.0.4 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn create_new_room(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
   let decoder = {
-    use id <- decode.field(0, decode.string)
-    decode.success(CreateNewRoomRow(id:))
+    use room_id <- decode.field(0, decode.string)
+    decode.success(CreateNewRoomRow(room_id:))
   }
 
-  "INSERT INTO lntl.rooms (
-  id,
-  owner_id,
-  name,
-  capacity,
-  status,
-  created_at,
-  updated_at
+  "-- name: create_room_with_membership :one
+-- Insert a new room (if the owner exists and name is unique), and
+-- automatically add the owner as a member. Returns the new room ID.
+WITH new_room AS (
+  INSERT INTO lntl.rooms (
+    id,
+    owner_id,
+    name,
+    capacity,
+    status,
+    created_at,
+    updated_at
+  )
+  SELECT
+    $1,    -- room_id
+    $2,    -- owner_id
+    $3,    -- room name
+    $4,    -- capacity
+    $5,    -- status
+    now(),
+    now()
+  WHERE
+    -- owner must exist
+    EXISTS (
+      SELECT 1
+        FROM lntl.users
+       WHERE id = $2
+    )
+    -- name must be unique
+    AND NOT EXISTS (
+      SELECT 1
+        FROM lntl.rooms
+       WHERE name = $3
+    )
+  RETURNING id
+)
+INSERT INTO lntl.room_members (
+  room_id,
+  user_id,
+  joined_at
 )
 SELECT
-  $1,    -- new room id
-  $2,    -- owner_id to check
-  $3,    -- room name
-  $4,    -- capacity
-  $5,    -- status
-  now(),
+  id,    -- from new_room
+  $2,    -- owner_id
   now()
-WHERE
-  -- only insert if the user exists
-  EXISTS (
-    SELECT 1
-    FROM lntl.users
-    WHERE id = $2
-  )
-  -- and no other room already has the same name
-  AND NOT EXISTS (
-    SELECT 1
-    FROM lntl.rooms
-    WHERE name = $3
-  )
-RETURNING id;
+FROM new_room
+RETURNING room_id;
 "
   |> pog.query
   |> pog.parameter(pog.text(arg_1))
