@@ -19,7 +19,7 @@ sanitize_text(Text) when is_list(Text) ->
     % options are "garbled", "vowels", "stars" and others
     % we're just gonna use these options for now cause
     % they're better :)
-    FullConfig = feck:configure([{replacement, vowels}], BaseConfig),
+    FullConfig = feck:configure([{replacement, garbled}], BaseConfig),
 
     SanitizedList = feck:sanitize(Text, FullConfig),
 
