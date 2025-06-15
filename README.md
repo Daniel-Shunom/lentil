@@ -1,4 +1,4 @@
-<img src="assets/lentil.png" alt="Lentil Logo" width="400" border-radius="20">
+<img src="assets/lentil.png" alt="Lentil Logo" width="400" style="border-radius: 10px;">
 
 > *Fault-tolerant chat backend • Built with Gleam & OTP*
 
