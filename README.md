@@ -1,4 +1,4 @@
-<img src="assets/lentil.png" alt="Blue Brie" style="border-radius: 10px; max-width: 400px; width: 100%;">
+<img src="assets/lentil.png" alt="Blue Brie" style="border-radius: 10px; max-width: 150px; width: 100%;">
 
 > *Fault-tolerant chat backend • Built with Gleam & OTP*
 
