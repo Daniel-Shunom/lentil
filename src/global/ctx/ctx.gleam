@@ -69,7 +69,7 @@ pub fn room_sup_handler(
       actor.continue(state)
     }
     t.NEWROOM(userid, capacity, name, roomid) ->
-      case wf.create_room_process(userid, capacity, name) {
+      case wf.create_room_process(userid, capacity, name, state.context) {
         Error(_) -> actor.continue(state)
         Ok(#(roomproc, _)) -> {
           echo "==========ROOMMSG=========="
@@ -103,19 +103,13 @@ fn ctx_handler(
   state: t.CtxState,
 ) -> actor.Next(t.CtxMsg, t.CtxState) {
   case msg {
-    t.AddToCtx(userid, usersubj) ->
-      case dict.has_key(state.registry, userid) {
-        True -> {
-          echo state.registry
-          actor.continue(state)
-        }
-        False -> {
-          let new_state =
-            t.CtxState(dict.insert(state.registry, userid, usersubj))
-          echo new_state.registry
-          actor.continue(new_state)
-        }
-      }
+    t.AddToCtx(userid, usersubj) -> {
+      echo "::::::::::::NEW USER PROCESS::::::::::::"
+      let new_state =
+        t.CtxState(dict.insert(state.registry, userid, usersubj))
+      echo new_state.registry
+      actor.continue(new_state)
+    }
     t.DelFrmCtx(userid) ->
       case dict.get(state.registry, userid) {
         Error(_) -> actor.continue(state)
@@ -173,7 +167,7 @@ fn sup_handler(
 ) -> actor.Next(t.SupMsg, t.SupState) {
   case msg {
     t.ADD(user) ->
-      case wf.create_user_process(user, state.roomsupbox) {
+      case wf.create_user_process(user, state.roomsupbox, state.ctx) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
           t.AddToCtx(user.user_id.id, subj.0)
