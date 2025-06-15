@@ -40,7 +40,7 @@ fn server_routing(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
       routes_create_user.handle_create_user(req, ctx)
     }
 
-    ["user", "profile", _sessionid] -> {
+    ["user", "profile"] -> {
       use <- wisp.require_method(req, http.Get)
       routes_profile.handle_get_profile(req, ctx)
     }
