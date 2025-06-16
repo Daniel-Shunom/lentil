@@ -16,7 +16,20 @@ pub type RoomSession {
     session_id: String,
     retry_bin: List(msg.Message),
     connection_registry: set.Set(process.Pid),
+    // bin_handler: process.Subject(Retry)
   )
+}
+
+pub type BinState {
+  BinState(
+    bin: List(msg.Message),
+    session_subject: process.Subject(RoomSessionMessage),
+    sender_subject: process.Subject(SessionOperationMessage)
+  )
+}
+
+pub type Retry {
+  Retry(msg.Message)
 }
 
 pub type UserSession {

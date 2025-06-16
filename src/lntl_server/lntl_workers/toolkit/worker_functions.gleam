@@ -15,6 +15,7 @@ import messages/methods/methods as mt
 import messages/types/msg
 import prng/random
 import prng/seed
+// import lntl_server/lntl_workers/w_room/w_session.
 import rooms/methods/methods
 import rooms/types/rooms
 import gleam/function
@@ -355,6 +356,7 @@ fn create_room_process_helper_supervisor(
           session_id: new_session_id,
           retry_bin: [],
           connection_registry: new_registry,
+          // bin_handler: bin_strategy
         )
       let parent = process.new_subject()
       let worker = 
