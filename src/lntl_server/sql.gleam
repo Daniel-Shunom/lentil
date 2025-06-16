@@ -97,9 +97,12 @@ pub fn fetch_user_session(db, arg_1) {
     use user_id <- decode.field(1, decode.optional(decode.string))
     use created_at <- decode.field(2, decode.string)
     use expires_at <- decode.field(3, decode.string)
-    decode.success(
-      FetchUserSessionRow(session_id:, user_id:, created_at:, expires_at:),
-    )
+    decode.success(FetchUserSessionRow(
+      session_id:,
+      user_id:,
+      created_at:,
+      expires_at:,
+    ))
   }
 
   "SELECT
@@ -197,21 +200,19 @@ pub fn fetch_user_by_id(db, arg_1) {
     use pronouns <- decode.field(8, decode.string)
     use is_authenticated <- decode.field(9, decode.optional(decode.bool))
     use created_at <- decode.field(10, decode.string)
-    decode.success(
-      FetchUserByIdRow(
-        id:,
-        first_name:,
-        last_name:,
-        username:,
-        dob_day:,
-        dob_month:,
-        dob_year:,
-        gender:,
-        pronouns:,
-        is_authenticated:,
-        created_at:,
-      ),
-    )
+    decode.success(FetchUserByIdRow(
+      id:,
+      first_name:,
+      last_name:,
+      username:,
+      dob_day:,
+      dob_month:,
+      dob_year:,
+      gender:,
+      pronouns:,
+      is_authenticated:,
+      created_at:,
+    ))
   }
 
   "SELECT
@@ -273,19 +274,17 @@ pub fn fetch_user(db, arg_1, arg_2) {
     use dob_year <- decode.field(6, decode.int)
     use gender <- decode.field(7, decode.string)
     use pronouns <- decode.field(8, decode.string)
-    decode.success(
-      FetchUserRow(
-        id:,
-        first_name:,
-        last_name:,
-        username:,
-        dob_day:,
-        dob_month:,
-        dob_year:,
-        gender:,
-        pronouns:,
-      ),
-    )
+    decode.success(FetchUserRow(
+      id:,
+      first_name:,
+      last_name:,
+      username:,
+      dob_day:,
+      dob_month:,
+      dob_year:,
+      gender:,
+      pronouns:,
+    ))
   }
 
   "SELECT
@@ -345,18 +344,16 @@ pub fn fetch_room_messages(db, arg_1, arg_2, arg_3) {
     use status <- decode.field(5, decode.string)
     use edited_at <- decode.field(6, decode.string)
     use deleted_at <- decode.field(7, decode.string)
-    decode.success(
-      FetchRoomMessagesRow(
-        id:,
-        room_id:,
-        user_id:,
-        content:,
-        timestamp:,
-        status:,
-        edited_at:,
-        deleted_at:,
-      ),
-    )
+    decode.success(FetchRoomMessagesRow(
+      id:,
+      room_id:,
+      user_id:,
+      content:,
+      timestamp:,
+      status:,
+      edited_at:,
+      deleted_at:,
+    ))
   }
 
   "SELECT
@@ -420,19 +417,17 @@ pub fn fetch_room_members(db, arg_1) {
     use dob_year <- decode.field(6, decode.int)
     use gender <- decode.field(7, decode.string)
     use pronouns <- decode.field(8, decode.string)
-    decode.success(
-      FetchRoomMembersRow(
-        id:,
-        first_name:,
-        last_name:,
-        username:,
-        dob_day:,
-        dob_month:,
-        dob_year:,
-        gender:,
-        pronouns:,
-      ),
-    )
+    decode.success(FetchRoomMembersRow(
+      id:,
+      first_name:,
+      last_name:,
+      username:,
+      dob_day:,
+      dob_month:,
+      dob_year:,
+      gender:,
+      pronouns:,
+    ))
   }
 
   "SELECT
@@ -489,17 +484,15 @@ pub fn fetch_room_by_id(db, arg_1) {
     use status <- decode.field(4, decode.string)
     use created_at <- decode.field(5, decode.string)
     use updated_at <- decode.field(6, decode.string)
-    decode.success(
-      FetchRoomByIdRow(
-        id:,
-        owner_id:,
-        name:,
-        capacity:,
-        status:,
-        created_at:,
-        updated_at:,
-      ),
-    )
+    decode.success(FetchRoomByIdRow(
+      id:,
+      owner_id:,
+      name:,
+      capacity:,
+      status:,
+      created_at:,
+      updated_at:,
+    ))
   }
 
   "SELECT
@@ -631,17 +624,15 @@ pub fn fetch_all_rooms(db) {
     use status <- decode.field(4, decode.string)
     use created_at <- decode.field(5, decode.string)
     use updated_at <- decode.field(6, decode.string)
-    decode.success(
-      FetchAllRoomsRow(
-        id:,
-        owner_id:,
-        name:,
-        capacity:,
-        status:,
-        created_at:,
-        updated_at:,
-      ),
-    )
+    decode.success(FetchAllRoomsRow(
+      id:,
+      owner_id:,
+      name:,
+      capacity:,
+      status:,
+      created_at:,
+      updated_at:,
+    ))
   }
 
   "-- name: fetch_all_rooms :many
@@ -849,8 +840,7 @@ pub fn create_user(
   arg_9,
   arg_10,
 ) {
-  let decoder =
-  {
+  let decoder = {
     use id <- decode.field(0, decode.string)
     decode.success(CreateUserRow(id:))
   }

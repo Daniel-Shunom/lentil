@@ -1,6 +1,6 @@
+import gleam/io
 import gleeunit
 import gleeunit/should
-import gleam/io
 
 pub fn main() {
   gleeunit.main()

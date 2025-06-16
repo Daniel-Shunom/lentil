@@ -24,7 +24,7 @@ pub type BinState {
   BinState(
     bin: List(msg.Message),
     session_subject: process.Subject(RoomSessionMessage),
-    sender_subject: process.Subject(SessionOperationMessage)
+    sender_subject: process.Subject(SessionOperationMessage),
   )
 }
 

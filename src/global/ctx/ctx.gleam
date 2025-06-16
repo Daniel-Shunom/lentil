@@ -105,8 +105,7 @@ fn ctx_handler(
   case msg {
     t.AddToCtx(userid, usersubj) -> {
       echo "::::::::::::NEW USER PROCESS::::::::::::"
-      let new_state =
-        t.CtxState(dict.insert(state.registry, userid, usersubj))
+      let new_state = t.CtxState(dict.insert(state.registry, userid, usersubj))
       echo new_state.registry
       actor.continue(new_state)
     }

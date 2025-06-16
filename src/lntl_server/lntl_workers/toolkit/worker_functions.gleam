@@ -4,6 +4,7 @@ import gleam/int
 import gleam/list
 import gleam/otp/actor
 import gleam/otp/supervisor
+
 // import gleam/otp/static_supervisor.{OneForOne}
 import gleam/set
 import global/ctx/types as t
@@ -15,17 +16,18 @@ import messages/methods/methods as mt
 import messages/types/msg
 import prng/random
 import prng/seed
+
 // import lntl_server/lntl_workers/w_room/w_session.
+import gleam/function
 import rooms/methods/methods
 import rooms/types/rooms
-import gleam/function
 import users/types/users
 
 pub fn create_room_process(
   owner: users.UserId,
   cap: rooms.RoomCapacity,
   name: String,
-  rm_registry: process.Subject(t.RmMsg)
+  rm_registry: process.Subject(t.RmMsg),
 ) -> Result(
   #(process.Subject(wt.RoomSessionMessage), String),
   rooms.RoomCreateError,
@@ -36,7 +38,7 @@ pub fn create_room_process(
 pub fn create_user_process(
   user: users.User,
   roomsupbox: process.Subject(t.RmMsg),
-  ctx_subj: process.Subject(t.CtxMsg)
+  ctx_subj: process.Subject(t.CtxMsg),
 ) -> Result(
   #(process.Subject(wt.SessionOperationMessage), String),
   users.USERCREATIONERROR,
@@ -66,7 +68,7 @@ fn room_session_handler(
       }
     }
     wt.SENDMESSAGE(message, client_taskinbox) -> {
-      let new_message = 
+      let new_message =
         msg.Message(..sanitize_message(message), message_code: msg.DELIVERED)
       // TODO -> PLEASE FIX THIS!!
       echo "IN ACTUAL ROOM::::"
@@ -134,17 +136,14 @@ fn room_session_handler(
     wt.JOIN(userid, pid, client) -> {
       case list.contains(session_state.room_data.room_members, userid) {
         True -> {
-          let new_registry = 
+          let new_registry =
             session_state.connection_registry
             |> set.insert(pid)
-          let new_state = 
-            wt.RoomSession(
-              ..session_state,
-              connection_registry: new_registry
-            )
-            wt.SUCCESS("Already room member")
-            |> actor.send(client, _)
-            actor.continue(new_state)
+          let new_state =
+            wt.RoomSession(..session_state, connection_registry: new_registry)
+          wt.SUCCESS("Already room member")
+          |> actor.send(client, _)
+          actor.continue(new_state)
         }
         False -> {
           let new_members =
@@ -164,7 +163,6 @@ fn room_session_handler(
           actor.continue(new_state)
         }
       }
-      
     }
     wt.UPDATENAME(user, new_name, client) -> {
       case session_state.room_data.room_owner == user {
@@ -305,7 +303,6 @@ fn user_session_handler(
           actor.continue(session_state)
         }
       }
-      
     }
     wt.ADDROOM(id, mailbox) -> {
       let new_rooms =
@@ -359,16 +356,22 @@ fn create_room_process_helper_supervisor(
           // bin_handler: bin_strategy
         )
       let parent = process.new_subject()
-      let worker = 
-        fn(_) {new_room_sup(new_room_session, new_room.room_id.id, parent, rm_registry)}
+      let worker =
+        fn(_) {
+          new_room_sup(
+            new_room_session,
+            new_room.room_id.id,
+            parent,
+            rm_registry,
+          )
+        }
         |> supervisor.worker()
       let assert Ok(_) =
-        supervisor.start_spec(supervisor.Spec(
-          Nil, 30, 5, supervisor.add(_, worker)
-        ))
-      
-      let assert Ok(room_actor_subj) =
-        process.receive(parent, 1000)
+        supervisor.start_spec(
+          supervisor.Spec(Nil, 30, 5, supervisor.add(_, worker)),
+        )
+
+      let assert Ok(room_actor_subj) = process.receive(parent, 1000)
       Ok(#(room_actor_subj, new_session_id))
     }
   }
@@ -378,28 +381,29 @@ fn new_room_sup(
   session: wt.RoomSession,
   roomid: String,
   parent: process.Subject(process.Subject(wt.RoomSessionMessage)),
-  rm_registry: process.Subject(t.RmMsg)
+  rm_registry: process.Subject(t.RmMsg),
 ) {
-  actor.start_spec(actor.Spec(fn() {
-    let worker_subj = process.new_subject()
-    process.send(parent, worker_subj)
+  actor.start_spec(actor.Spec(
+    fn() {
+      let worker_subj = process.new_subject()
+      process.send(parent, worker_subj)
 
-    t.NEW(roomid, worker_subj)
-    |> actor.send(rm_registry, _)
+      t.NEW(roomid, worker_subj)
+      |> actor.send(rm_registry, _)
 
-    process.new_selector()
-    |> process.selecting(worker_subj, function.identity)
-    |> actor.Ready(session, _)
-  },
-  1000,
-  room_session_handler)
-  )
+      process.new_selector()
+      |> process.selecting(worker_subj, function.identity)
+      |> actor.Ready(session, _)
+    },
+    1000,
+    room_session_handler,
+  ))
 }
 
 fn create_user_process_helper_supervisor(
   user: users.User,
   roomsupbox: process.Subject(t.RmMsg),
-  ctx_subj: process.Subject(t.CtxMsg)
+  ctx_subj: process.Subject(t.CtxMsg),
 ) {
   let new_session_id = generate_session_id(wt.USERSESSION)
   let owned = get_owned_rooms(user)
@@ -419,17 +423,16 @@ fn create_user_process_helper_supervisor(
       owned_rooms: owned,
     )
   let parent = process.new_subject()
-  let worker = 
-    fn(_){new(new_user_session, parent, roomsupbox, ctx_subj)}
+  let worker =
+    fn(_) { new(new_user_session, parent, roomsupbox, ctx_subj) }
     |> supervisor.worker()
 
   let assert Ok(_) =
-    supervisor.start_spec(supervisor.Spec(
-      Nil, 25, 5, supervisor.add(_, worker)
-    ))
+    supervisor.start_spec(
+      supervisor.Spec(Nil, 25, 5, supervisor.add(_, worker)),
+    )
   echo "::::::STARTED SUPERVISOR FOR USER::::::"
-  let assert Ok(actor_subj) = 
-    process.receive(parent, 1000)
+  let assert Ok(actor_subj) = process.receive(parent, 1000)
   echo "::::::RECIEVED ACTUAL PROCESS ACTOR FOR USER::::::"
   Ok(#(actor_subj, new_session_id))
 }
@@ -439,7 +442,7 @@ fn create_user_process_helper_supervisor(
 //   cap: rooms.RoomCapacity,
 //   rm_registry: process.Subject(t.RmMsg),
 //   name: String,
-  
+
 // ) {
 //   let assert Ok(#(subj, _)) = 
 //     create_room_process_helper_supervisor(owner, cap, rm_registry, name)
@@ -448,35 +451,39 @@ fn create_user_process_helper_supervisor(
 //     fn(_) { Ok(subj) }
 //     |> supervisor.worker()
 //     |> static_supervisor.add(tmp, _)
-  
+
 //   let spec =
 //     static_supervisor.new(OneForOne)
 //     |> static_supervisor.add(worker)
 //     |> static_supervisor.restart_tolerance(5, 10)
-  
+
 //   let assert Ok(_) = static_supervisor.start_link(spec)
 
 // }
 
 fn new(
-  arg: wt.UserSession, 
-  parent: process.Subject(process.Subject(wt.SessionOperationMessage)), 
+  arg: wt.UserSession,
+  parent: process.Subject(process.Subject(wt.SessionOperationMessage)),
   roomsupbox: process.Subject(t.RmMsg),
-  ctx_subj: process.Subject(t.CtxMsg)
+  ctx_subj: process.Subject(t.CtxMsg),
 ) {
   let handler = fn(message, session) {
     user_session_handler(message, session, roomsupbox)
   }
   echo "::::::CREATED SUPERVISOR FOR USER::::::"
-  actor.start_spec(actor.Spec(fn() {
-    let worker_subj = process.new_subject()
-    process.send(parent, worker_subj)
-    t.AddToCtx(arg.user.user_id.id, worker_subj)
-    |> actor.send(ctx_subj, _)
-    process.new_selector()
+  actor.start_spec(actor.Spec(
+    fn() {
+      let worker_subj = process.new_subject()
+      process.send(parent, worker_subj)
+      t.AddToCtx(arg.user.user_id.id, worker_subj)
+      |> actor.send(ctx_subj, _)
+      process.new_selector()
       |> process.selecting(worker_subj, function.identity)
       |> actor.Ready(arg, _)
-  }, 1000, handler))
+    },
+    1000,
+    handler,
+  ))
 }
 
 fn get_owned_rooms(user: users.User) -> List(rooms.RoomId) {
