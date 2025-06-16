@@ -4,6 +4,7 @@ import gleam/int
 import gleam/list
 import gleam/otp/actor
 import gleam/otp/supervisor
+// import gleam/otp/static_supervisor.{OneForOne}
 import gleam/set
 import global/ctx/types as t
 import global/functions.{connect_lentildb}
@@ -360,7 +361,9 @@ fn create_room_process_helper_supervisor(
         fn(_) {new_room_sup(new_room_session, new_room.room_id.id, parent, rm_registry)}
         |> supervisor.worker()
       let assert Ok(_) =
-        supervisor.start(supervisor.add(_, worker))
+        supervisor.start_spec(supervisor.Spec(
+          Nil, 30, 5, supervisor.add(_, worker)
+        ))
       
       let assert Ok(room_actor_subj) =
         process.receive(parent, 1000)
@@ -419,13 +422,39 @@ fn create_user_process_helper_supervisor(
     |> supervisor.worker()
 
   let assert Ok(_) =
-    supervisor.start(supervisor.add(_, worker))
+    supervisor.start_spec(supervisor.Spec(
+      Nil, 25, 5, supervisor.add(_, worker)
+    ))
   echo "::::::STARTED SUPERVISOR FOR USER::::::"
   let assert Ok(actor_subj) = 
     process.receive(parent, 1000)
   echo "::::::RECIEVED ACTUAL PROCESS ACTOR FOR USER::::::"
   Ok(#(actor_subj, new_session_id))
 }
+
+// pub fn start_sup_supervisor(
+//   owner: users.UserId,
+//   cap: rooms.RoomCapacity,
+//   rm_registry: process.Subject(t.RmMsg),
+//   name: String,
+  
+// ) {
+//   let assert Ok(#(subj, _)) = 
+//     create_room_process_helper_supervisor(owner, cap, rm_registry, name)
+//   let tmp = static_supervisor.new(OneForOne)
+//   let worker = 
+//     fn(_) { Ok(subj) }
+//     |> supervisor.worker()
+//     |> static_supervisor.add(tmp, _)
+  
+//   let spec =
+//     static_supervisor.new(OneForOne)
+//     |> static_supervisor.add(worker)
+//     |> static_supervisor.restart_tolerance(5, 10)
+  
+//   let assert Ok(_) = static_supervisor.start_link(spec)
+
+// }
 
 fn new(
   arg: wt.UserSession, 
