@@ -289,20 +289,10 @@ fn user_session_handler(
       }
     }
     wt.SENDTOROOM(roomid, message) -> {
-      echo "MSG IN USR PROC::::   " <> message.message_content
-      echo message
-      case message.message_content {
-        "i am groot" -> {
-          echo "OH NO, PANICKING"
-          panic as "-----test panicking-----"
-        }
-        _ -> {
-          wt.SENDMESSAGE(message, session_state.task_inbox)
-          |> t.SEND(roomid.id, _)
-          |> actor.send(roombox, _)
-          actor.continue(session_state)
-        }
-      }
+      wt.SENDMESSAGE(message, session_state.task_inbox)
+      |> t.SEND(roomid.id, _)
+      |> actor.send(roombox, _)
+      actor.continue(session_state)
     }
     wt.ADDROOM(id, mailbox) -> {
       let new_rooms =
