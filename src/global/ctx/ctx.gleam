@@ -5,7 +5,7 @@ import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
 import gleam/otp/task
 import global/ctx/types as t
-import global/functions.{connect_lentildb, get_timestamp, id_generator}
+import global/functions.{get_timestamp, id_generator}
 import lntl_server/lntl_workers/toolkit/worker_functions as wf
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import lntl_server/sql
@@ -26,11 +26,11 @@ pub type Context {
   )
 }
 
-pub fn get_context() -> Context {
-  let connection = connect_lentildb()
+pub fn get_context(conn: pog.Connection) -> Context {
+  let connection = conn
   let roombox = rmctxprx()
-  let roomsup = room_supervisor(roombox)
-  let usersup = sup_ctx(roombox)
+  let roomsup = room_supervisor(roombox, conn)
+  let usersup = sup_ctx(roombox, conn)
   case get_rooms(connection) {
     None -> {
       echo "No rooms in DB"
@@ -61,6 +61,7 @@ pub fn get_context() -> Context {
 pub fn room_sup_handler(
   msg: t.RmSupMsg,
   state: t.RmSupState,
+  conn: pog.Connection
 ) -> actor.Next(t.RmSupMsg, t.RmSupState) {
   case msg {
     t.DELROOM(sessionid) -> {
@@ -69,7 +70,7 @@ pub fn room_sup_handler(
       actor.continue(state)
     }
     t.NEWROOM(userid, capacity, name, roomid) ->
-      case wf.create_room_process(userid, capacity, name, state.context) {
+      case wf.create_room_process(userid, capacity, name, state.context, conn) {
         Error(_) -> actor.continue(state)
         Ok(#(roomproc, _)) -> {
           echo "==========ROOMMSG=========="
@@ -153,20 +154,24 @@ fn ctx_handler(
 
 // Supervisor Functions
 
-fn sup_ctx(roomsupbox: Subject(t.RmMsg)) -> Subject(t.SupMsg) {
-  let assert Ok(sup_subj) =
-    t.SupState(process.new_subject(), ctx(), roomsupbox:)
-    |> actor.start(sup_handler)
+fn sup_ctx(roomsupbox: Subject(t.RmMsg), conn: pog.Connection) -> Subject(t.SupMsg) {
+  let assert Ok(sup_subj) ={
+    // t.SupState(process.new_subject(), ctx(), roomsupbox:)
+    // |> actor.start(sup_handler)
+    use msg, state <- actor.start(t.SupState(process.new_subject(), ctx(), roomsupbox:))
+    sup_handler(msg, state, conn)
+  }
   sup_subj
 }
 
 fn sup_handler(
   msg: t.SupMsg,
   state: t.SupState,
+  conn: pog.Connection
 ) -> actor.Next(t.SupMsg, t.SupState) {
   case msg {
     t.ADD(user) ->
-      case wf.create_user_process(user, state.roomsupbox, state.ctx) {
+      case wf.create_user_process(user, state.roomsupbox, state.ctx, conn) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
           t.AddToCtx(user.user_id.id, subj.0)
@@ -245,10 +250,13 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
 
 // Room Supervisor Functions
 
-fn room_supervisor(roombox: Subject(t.RmMsg)) -> Subject(t.RmSupMsg) {
-  let assert Ok(room_sup_subj) =
-    t.RmSupState(process.new_subject(), roombox)
-    |> actor.start(room_sup_handler)
+fn room_supervisor(roombox: Subject(t.RmMsg), conn: pog.Connection) -> Subject(t.RmSupMsg) {
+  let assert Ok(room_sup_subj) = {
+    // t.RmSupState(process.new_subject(), roombox)
+    // |> actor.start(room_sup_handler())
+    use msg, state <- actor.start(t.RmSupState(process.new_subject(), roombox)) 
+    room_sup_handler(msg, state, conn)
+  }
   room_sup_subj
 }
 

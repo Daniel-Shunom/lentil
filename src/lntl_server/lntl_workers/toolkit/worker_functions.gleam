@@ -1,3 +1,4 @@
+import pog
 import gleam/dict
 import gleam/erlang/process
 import gleam/int
@@ -8,7 +9,6 @@ import gleam/otp/supervisor
 // import gleam/otp/static_supervisor.{OneForOne}
 import gleam/set
 import global/ctx/types as t
-import global/functions.{connect_lentildb}
 import lntl_server/lntl_workers/toolkit/constants as m
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import lntl_server/sql
@@ -28,22 +28,24 @@ pub fn create_room_process(
   cap: rooms.RoomCapacity,
   name: String,
   rm_registry: process.Subject(t.RmMsg),
+  conn: pog.Connection
 ) -> Result(
   #(process.Subject(wt.RoomSessionMessage), String),
   rooms.RoomCreateError,
 ) {
-  create_room_process_helper_supervisor(owner, cap, rm_registry, name)
+  create_room_process_helper_supervisor(owner, cap, rm_registry, name, conn)
 }
 
 pub fn create_user_process(
   user: users.User,
   roomsupbox: process.Subject(t.RmMsg),
   ctx_subj: process.Subject(t.CtxMsg),
+  conn: pog.Connection
 ) -> Result(
   #(process.Subject(wt.SessionOperationMessage), String),
   users.USERCREATIONERROR,
 ) {
-  create_user_process_helper_supervisor(user, roomsupbox, ctx_subj)
+  create_user_process_helper_supervisor(user, roomsupbox, ctx_subj, conn)
 }
 
 fn room_session_handler(
@@ -328,11 +330,12 @@ fn create_room_process_helper_supervisor(
   capacity cap: rooms.RoomCapacity,
   room_registry rm_registry: process.Subject(t.RmMsg),
   room_name name: String,
+  connection conn: pog.Connection
 ) -> Result(
   #(process.Subject(wt.RoomSessionMessage), String),
   rooms.RoomCreateError,
 ) {
-  case methods.create_room(owner, name, [], cap) {
+  case methods.create_room(owner, name, [], cap, conn) {
     Error(error) -> Error(error)
     Ok(new_room) -> {
       let new_session_id = generate_session_id(wt.ROOMSESSION)
@@ -394,12 +397,13 @@ fn create_user_process_helper_supervisor(
   user: users.User,
   roomsupbox: process.Subject(t.RmMsg),
   ctx_subj: process.Subject(t.CtxMsg),
+  conn: pog.Connection
 ) {
   let new_session_id = generate_session_id(wt.USERSESSION)
-  let owned = get_owned_rooms(user)
+  let owned = get_owned_rooms(user, conn)
   let inbox = process.new_subject()
   let member =
-    get_member_rooms(user)
+    get_member_rooms(user, conn)
     |> list.map(fn(id) { #(id, process.new_subject()) })
     |> dict.from_list()
   let new_queue = mt.create_message_queue()
@@ -476,8 +480,8 @@ fn new(
   ))
 }
 
-fn get_owned_rooms(user: users.User) -> List(rooms.RoomId) {
-  case sql.fetch_room_by_id(connect_lentildb(), user.user_id.id) {
+fn get_owned_rooms(user: users.User, conn: pog.Connection) -> List(rooms.RoomId) {
+  case sql.fetch_room_by_id(conn, user.user_id.id) {
     Error(_) -> []
     Ok(res) -> {
       list.map(res.rows, fn(val) { rooms.RoomId(id: val.id) })
@@ -485,8 +489,8 @@ fn get_owned_rooms(user: users.User) -> List(rooms.RoomId) {
   }
 }
 
-fn get_member_rooms(user: users.User) -> List(rooms.RoomId) {
-  case sql.fetch_user_room_memberships(connect_lentildb(), user.user_id.id) {
+fn get_member_rooms(user: users.User, conn: pog.Connection) -> List(rooms.RoomId) {
+  case sql.fetch_user_room_memberships(conn, user.user_id.id) {
     Error(_) -> []
     Ok(res) -> {
       list.map(res.rows, fn(val) { rooms.RoomId(id: val.room_id) })

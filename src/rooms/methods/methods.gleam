@@ -1,6 +1,7 @@
+import pog
 import gleam/int
 import gleam/list
-import global/functions.{connect_lentildb, get_timestamp}
+import global/functions.{get_timestamp}
 import lntl_server/sql
 import prng/random
 import prng/seed
@@ -12,9 +13,10 @@ pub fn create_room(
   room_name name: String,
   room_members members: List(users.UserId),
   room_capacity capacity: rooms.RoomCapacity,
+  connection conn: pog.Connection
 ) -> Result(rooms.Room, rooms.RoomCreateError) {
   let is_cap = set_capacity(capacity) - 1 >= list.length(members)
-  let name_exists = check_name(name)
+  let name_exists = check_name(name, conn)
   case is_cap {
     False -> Error(rooms.EXCEEDSCapacity)
     True -> {
@@ -163,8 +165,8 @@ fn generate_room_id() -> String {
   "lntl-rm-" <> secure_prefix <> secure_id
 }
 
-fn check_name(name: String) -> Bool {
-  case sql.fetch_name_exists(connect_lentildb(), name) {
+fn check_name(name: String, conn: pog.Connection) -> Bool {
+  case sql.fetch_name_exists(conn, name) {
     Error(_) -> False
     Ok(res) -> {
       list.any(res.rows, fn(x) { x.available == True })
