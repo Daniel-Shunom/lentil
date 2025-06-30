@@ -61,7 +61,7 @@ pub fn get_context(conn: pog.Connection) -> Context {
 pub fn room_sup_handler(
   msg: t.RmSupMsg,
   state: t.RmSupState,
-  conn: pog.Connection
+  conn: pog.Connection,
 ) -> actor.Next(t.RmSupMsg, t.RmSupState) {
   case msg {
     t.DELROOM(sessionid) -> {
@@ -107,7 +107,6 @@ fn ctx_handler(
     t.AddToCtx(userid, usersubj) -> {
       echo "::::::::::::NEW USER PROCESS::::::::::::"
       let new_state = t.CtxState(dict.insert(state.registry, userid, usersubj))
-      echo new_state.registry
       actor.continue(new_state)
     }
     t.DelFrmCtx(userid) ->
@@ -154,11 +153,18 @@ fn ctx_handler(
 
 // Supervisor Functions
 
-fn sup_ctx(roomsupbox: Subject(t.RmMsg), conn: pog.Connection) -> Subject(t.SupMsg) {
-  let assert Ok(sup_subj) ={
+fn sup_ctx(
+  roomsupbox: Subject(t.RmMsg),
+  conn: pog.Connection,
+) -> Subject(t.SupMsg) {
+  let assert Ok(sup_subj) = {
     // t.SupState(process.new_subject(), ctx(), roomsupbox:)
     // |> actor.start(sup_handler)
-    use msg, state <- actor.start(t.SupState(process.new_subject(), ctx(), roomsupbox:))
+    use msg, state <- actor.start(t.SupState(
+      process.new_subject(),
+      ctx(),
+      roomsupbox:,
+    ))
     sup_handler(msg, state, conn)
   }
   sup_subj
@@ -167,7 +173,7 @@ fn sup_ctx(roomsupbox: Subject(t.RmMsg), conn: pog.Connection) -> Subject(t.SupM
 fn sup_handler(
   msg: t.SupMsg,
   state: t.SupState,
-  conn: pog.Connection
+  conn: pog.Connection,
 ) -> actor.Next(t.SupMsg, t.SupState) {
   case msg {
     t.ADD(user) ->
@@ -185,7 +191,6 @@ fn sup_handler(
       actor.continue(state)
     }
     t.MSG(userid, roomid, message) -> {
-      echo "SUP_HANDLER::::   " <> message
       t.MsgToUserProc(userid.id, roomid, message)
       |> actor.send(state.ctx, _)
       actor.continue(state)
@@ -233,12 +238,12 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
         }
       }
     t.SEND(roomid, msg) -> {
-      echo "IN ROOM SUP::::   "
+      echo "::::IN ROOM SUP::::   "
       echo msg
       case dict.get(state.registry, roomid) {
         Error(_) -> actor.continue(state)
         Ok(roomsubj) -> {
-          echo "ROOMSUBJ::::"
+          echo "::::ROOMSUBJ::::"
           echo roomsubj
           actor.send(roomsubj, msg)
           actor.continue(state)
@@ -250,11 +255,14 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
 
 // Room Supervisor Functions
 
-fn room_supervisor(roombox: Subject(t.RmMsg), conn: pog.Connection) -> Subject(t.RmSupMsg) {
+fn room_supervisor(
+  roombox: Subject(t.RmMsg),
+  conn: pog.Connection,
+) -> Subject(t.RmSupMsg) {
   let assert Ok(room_sup_subj) = {
     // t.RmSupState(process.new_subject(), roombox)
     // |> actor.start(room_sup_handler())
-    use msg, state <- actor.start(t.RmSupState(process.new_subject(), roombox)) 
+    use msg, state <- actor.start(t.RmSupState(process.new_subject(), roombox))
     room_sup_handler(msg, state, conn)
   }
   room_sup_subj
