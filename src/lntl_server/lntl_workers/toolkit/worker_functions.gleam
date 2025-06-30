@@ -1,10 +1,11 @@
-import pog
 import gleam/dict
 import gleam/erlang/process
 import gleam/int
 import gleam/list
 import gleam/otp/actor
 import gleam/otp/supervisor
+// import gleam/otp/task
+import pog
 
 // import gleam/otp/static_supervisor.{OneForOne}
 import gleam/set
@@ -28,7 +29,7 @@ pub fn create_room_process(
   cap: rooms.RoomCapacity,
   name: String,
   rm_registry: process.Subject(t.RmMsg),
-  conn: pog.Connection
+  conn: pog.Connection,
 ) -> Result(
   #(process.Subject(wt.RoomSessionMessage), String),
   rooms.RoomCreateError,
@@ -40,7 +41,7 @@ pub fn create_user_process(
   user: users.User,
   roomsupbox: process.Subject(t.RmMsg),
   ctx_subj: process.Subject(t.CtxMsg),
-  conn: pog.Connection
+  conn: pog.Connection,
 ) -> Result(
   #(process.Subject(wt.SessionOperationMessage), String),
   users.USERCREATIONERROR,
@@ -73,22 +74,31 @@ fn room_session_handler(
       let new_message =
         msg.Message(..sanitize_message(message), message_code: msg.DELIVERED)
       // TODO -> PLEASE FIX THIS!!
-      echo "IN ACTUAL ROOM::::"
+      echo "::::IN ACTUAL ROOM::::"
       echo new_message
-      echo client_taskinbox
       let new_bin = list.prepend(session_state.retry_bin, new_message)
       let new_state = wt.RoomSession(..session_state, retry_bin: new_bin)
-      wt.MESSAGEDELIVERED(message)
+      wt.INCOMING(roomid: session_state.room_data.room_id.id, message: message)
       |> actor.send(client_taskinbox, _)
+      let tmp_msg = wt.INCOMING(session_state.room_data.room_id.id, new_message)
+      let mailman = actor.send(_, tmp_msg)
+      set.each(session_state.broadcast_pool, mailman)
+      echo "----------broadcasting----------"
       actor.continue(new_state)
     }
-    wt.CONNECT(user, pid, client) -> {
-      let search = fn(x) { x != user }
+    wt.CONNECT(userid, pid, client, client_mailbox) -> {
+      let search = fn(x) { x != userid }
       case list.any(session_state.room_data.room_members, search) {
         True -> {
           let new_registry = set.insert(session_state.connection_registry, pid)
+          let new_broadcast_pool =
+            set.insert(session_state.broadcast_pool, client_mailbox)
           let new_state =
-            wt.RoomSession(..session_state, connection_registry: new_registry)
+            wt.RoomSession(
+              ..session_state,
+              connection_registry: new_registry,
+              broadcast_pool: new_broadcast_pool,
+            )
           wt.SUCCESS(m.room_connect_success)
           |> actor.send(client, _)
           actor.continue(new_state)
@@ -275,7 +285,7 @@ fn user_session_handler(
     wt.CLOSESESSION -> actor.Stop(process.Normal)
     wt.SUCCESS(_) -> actor.continue(session_state)
     wt.MESSAGEDELIVERED(_) -> {
-      echo "::::::::::THE ROOM RESPOSNSE TO USER::::::::::"
+      echo "_____THE ROOM RESPOSNSE TO USER_____"
       echo session_message
       // TODO -> Okay we need to start thinking of things like caching, 
       // session states, and batching messages to databases for efficient
@@ -330,7 +340,7 @@ fn create_room_process_helper_supervisor(
   capacity cap: rooms.RoomCapacity,
   room_registry rm_registry: process.Subject(t.RmMsg),
   room_name name: String,
-  connection conn: pog.Connection
+  connection conn: pog.Connection,
 ) -> Result(
   #(process.Subject(wt.RoomSessionMessage), String),
   rooms.RoomCreateError,
@@ -339,13 +349,13 @@ fn create_room_process_helper_supervisor(
     Error(error) -> Error(error)
     Ok(new_room) -> {
       let new_session_id = generate_session_id(wt.ROOMSESSION)
-      let new_registry: set.Set(process.Pid) = set.new()
       let new_room_session =
         wt.RoomSession(
           room_data: new_room,
           session_id: new_session_id,
           retry_bin: [],
-          connection_registry: new_registry,
+          connection_registry: set.new(),
+          broadcast_pool: set.new(),
           // bin_handler: bin_strategy
         )
       let parent = process.new_subject()
@@ -393,15 +403,31 @@ fn new_room_sup(
   ))
 }
 
+fn message_stream_handler(
+  message: wt.RoomMessageStream,
+  _: Nil,
+) -> actor.Next(wt.RoomMessageStream, Nil) {
+  let wt.INCOMING(roomid: a, message: b) = message
+  // todo as "send message back to user or cache in a database"
+  echo "incoming from room: " <> a
+  echo b
+  actor.continue(Nil)
+}
+
+fn init_message_stream_mailbox() -> process.Subject(wt.RoomMessageStream) {
+  let assert Ok(mailbox) = actor.start(Nil, message_stream_handler)
+  mailbox
+}
+
 fn create_user_process_helper_supervisor(
   user: users.User,
   roomsupbox: process.Subject(t.RmMsg),
   ctx_subj: process.Subject(t.CtxMsg),
-  conn: pog.Connection
+  conn: pog.Connection,
 ) {
   let new_session_id = generate_session_id(wt.USERSESSION)
   let owned = get_owned_rooms(user, conn)
-  let inbox = process.new_subject()
+  let inbox = init_message_stream_mailbox()
   let member =
     get_member_rooms(user, conn)
     |> list.map(fn(id) { #(id, process.new_subject()) })
@@ -489,7 +515,10 @@ fn get_owned_rooms(user: users.User, conn: pog.Connection) -> List(rooms.RoomId)
   }
 }
 
-fn get_member_rooms(user: users.User, conn: pog.Connection) -> List(rooms.RoomId) {
+fn get_member_rooms(
+  user: users.User,
+  conn: pog.Connection,
+) -> List(rooms.RoomId) {
   case sql.fetch_user_room_memberships(conn, user.user_id.id) {
     Error(_) -> []
     Ok(res) -> {

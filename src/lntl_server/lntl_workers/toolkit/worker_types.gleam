@@ -15,7 +15,10 @@ pub type RoomSession {
     room_data: rooms.Room,
     session_id: String,
     retry_bin: List(msg.Message),
+    // pid's for user active actors containing the 
+    // SessionOperationMessage message type
     connection_registry: set.Set(process.Pid),
+    broadcast_pool: set.Set(process.Subject(RoomMessageStream)),
     // bin_handler: process.Subject(Retry)
   )
 }
@@ -25,6 +28,7 @@ pub type BinState {
     bin: List(msg.Message),
     session_subject: process.Subject(RoomSessionMessage),
     sender_subject: process.Subject(SessionOperationMessage),
+    sender_stream_box: process.Subject(RoomMessageStream),
   )
 }
 
@@ -38,17 +42,26 @@ pub type UserSession {
     user: users.User,
     queue: msg.MessageQueue,
     member_rooms: dict.Dict(rooms.RoomId, process.Subject(RoomSessionMessage)),
-    task_inbox: process.Subject(SessionOperationMessage),
+    task_inbox: process.Subject(RoomMessageStream),
     owned_rooms: List(rooms.RoomId),
   )
 }
 
 // This type indicates the type of messages a room session
 // can have.
+pub type RoomMessageStream {
+  INCOMING(roomid: String, message: msg.Message)
+}
+
 pub type RoomSessionMessage {
   DELETEROOM(users.UserId, process.Subject(SessionOperationMessage))
-  SENDMESSAGE(msg.Message, process.Subject(SessionOperationMessage))
-  CONNECT(users.UserId, process.Pid, process.Subject(SessionOperationMessage))
+  SENDMESSAGE(msg.Message, process.Subject(RoomMessageStream))
+  CONNECT(
+    userid: users.UserId,
+    process_id: process.Pid,
+    user_session_process: process.Subject(SessionOperationMessage),
+    user_mailbox_process: process.Subject(RoomMessageStream),
+  )
   DISCONNECT(
     users.UserId,
     process.Pid,

@@ -31,7 +31,7 @@ fn bin_handler(
   let tmp = msg.Message(..value, message_code: msg.QUEUED)
   let retry_task =
     fn() {
-      wt.SENDMESSAGE(tmp, state.sender_subject)
+      wt.SENDMESSAGE(tmp, state.sender_stream_box)
       |> actor.send(state.session_subject, _)
     }
     |> task.async()
