@@ -1,8 +1,8 @@
-import pog
 import gleam/int
 import gleam/list
 import global/functions.{get_timestamp}
 import lntl_server/sql
+import pog
 import prng/random
 import prng/seed
 import rooms/types/rooms
@@ -13,7 +13,7 @@ pub fn create_room(
   room_name name: String,
   room_members members: List(users.UserId),
   room_capacity capacity: rooms.RoomCapacity,
-  connection conn: pog.Connection
+  connection conn: pog.Connection,
 ) -> Result(rooms.Room, rooms.RoomCreateError) {
   let is_cap = set_capacity(capacity) - 1 >= list.length(members)
   let name_exists = check_name(name, conn)
