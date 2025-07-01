@@ -1,8 +1,8 @@
-import lntl_server/sql
 import gleam/bool
-import global/ctx/ctx
-import wisp
 import gleam/dynamic/decode
+import global/ctx/ctx
+import lntl_server/sql
+import wisp
 
 pub fn join_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
@@ -16,11 +16,9 @@ pub fn join_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
         Error(_) -> wisp.bad_request()
         Ok(_) -> wisp.accepted()
       }
-      
     }
   }
 }
-
 
 fn req_decoder() {
   use username <- decode.field("username", decode.string)
@@ -35,6 +33,6 @@ type Credentials {
     username: String,
     userid: String,
     roomid: String,
-    authenticated: Bool
+    authenticated: Bool,
   )
 }
