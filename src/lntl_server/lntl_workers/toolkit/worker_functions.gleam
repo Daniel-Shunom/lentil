@@ -4,6 +4,7 @@ import gleam/int
 import gleam/list
 import gleam/otp/actor
 import gleam/otp/supervisor
+
 // import gleam/otp/task
 import pog
 
@@ -403,10 +404,7 @@ fn new_room_sup(
   ))
 }
 
-fn message_stream_handler(
-  message: wt.RoomMessageStream,
-  _: Nil,
-) -> actor.Next(wt.RoomMessageStream, Nil) {
+fn message_stream_handler(message, _) -> actor.Next(wt.RoomMessageStream, Nil) {
   let wt.INCOMING(roomid: a, message: b) = message
   // todo as "send message back to user or cache in a database"
   echo "incoming from room: " <> a
