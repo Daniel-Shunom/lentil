@@ -26,11 +26,15 @@ pub type Context {
   )
 }
 
-pub fn get_context(conn: pog.Connection) -> Context {
+pub fn get_context(
+  conn: pog.Connection,
+  roombox_subj: process.Subject(t.RmMsg),
+  supstate_box: process.Subject(t.SupMsg),
+) -> Context {
   let connection = conn
-  let roombox = rmctxprx()
-  let roomsup = room_supervisor(roombox, conn)
-  let usersup = sup_ctx(roombox, conn)
+  let roombox = roombox_subj
+  let roomsup = room_supervisor(roombox, conn, supstate_box)
+  let usersup = supstate_box
   case get_rooms(connection) {
     None -> {
       echo "No rooms in DB"
@@ -62,7 +66,9 @@ pub fn room_sup_handler(
   msg: t.RmSupMsg,
   state: t.RmSupState,
   conn: pog.Connection,
+  rmsup: process.Subject(t.SupMsg),
 ) -> actor.Next(t.RmSupMsg, t.RmSupState) {
+  let shipment = process.new_subject()
   case msg {
     t.DELROOM(sessionid) -> {
       t.DEL(sessionid)
@@ -81,7 +87,44 @@ pub fn room_sup_handler(
           actor.continue(state)
         }
       }
+    t.ADDTOBROADCAST(userid, roomid) -> {
+      echo "******************************"
+      echo "*                            *"
+      echo "*  Adding user to broadcast  *"
+      echo "*                            *"
+      echo "******************************"
+      echo "*                             "
+      echo "*  USERID: " <> userid.id
+      echo "*  ROOMID: " <> roomid
+      echo "*                             "
+      echo "******************************"
+      t.GETUSERSESSION(userid, shipment)
+      |> process.send(rmsup, _)
+
+      case process.receive(shipment, 1000) {
+        Error(_) -> {
+          echo "failed to get user process from registry"
+          actor.continue(state)
+        }
+        Ok(data) -> {
+          echo "fetched user process from registry: "
+          echo data
+          t.BCT(roomid, userid.id, data.0, data.1)
+          |> actor.send(state.context, _)
+          actor.continue(state)
+        }
+      }
+
+      // process.receive()
+      // t.BCT(roomid, userid.id, client, client_mailbox)
+      // |> actor.send(state.context, _)
+      actor.continue(state)
+    }
   }
+}
+
+pub fn init_supstate(rmctx: Subject(t.RmMsg)) {
+  t.SupState(ctx(), rmctx)
 }
 
 // Private Types
@@ -104,16 +147,19 @@ fn ctx_handler(
   state: t.CtxState,
 ) -> actor.Next(t.CtxMsg, t.CtxState) {
   case msg {
-    t.AddToCtx(userid, usersubj) -> {
+    t.AddToCtx(userid, usersubjects) -> {
       echo "::::::::::::NEW USER PROCESS::::::::::::"
-      let new_state = t.CtxState(dict.insert(state.registry, userid, usersubj))
+      echo "subjects: "
+      echo usersubjects
+      let new_state =
+        t.CtxState(dict.insert(state.registry, userid, usersubjects))
       actor.continue(new_state)
     }
     t.DelFrmCtx(userid) ->
       case dict.get(state.registry, userid) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
-          let task = task.async(fn() { actor.send(subj, wt.CLOSESESSION) })
+          let task = task.async(fn() { actor.send(subj.0, wt.CLOSESESSION) })
           case task.try_await(task, 1000) {
             Error(_) -> actor.continue(state)
             Ok(_) -> {
@@ -143,7 +189,20 @@ fn ctx_handler(
             )
           echo "VALIDATEDMESSAGE::::   " <> new_msessage.message_content
           wt.SENDTOROOM(rooms.RoomId(roomid), new_msessage)
-          |> actor.send(usersession, _)
+          |> actor.send(usersession.0, _)
+          actor.continue(state)
+        }
+      }
+    }
+    t.FetchUserSession(userid, subj) -> {
+      case dict.get(state.registry, userid) {
+        Error(_) -> {
+          echo "failed to retrieve session details from registry"
+          actor.continue(state)
+        }
+        Ok(res) -> {
+          echo "sucessfully retrieved user session details from registry"
+          process.send(subj, res)
           actor.continue(state)
         }
       }
@@ -152,19 +211,9 @@ fn ctx_handler(
 }
 
 // Supervisor Functions
-
-fn sup_ctx(
-  roomsupbox: Subject(t.RmMsg),
-  conn: pog.Connection,
-) -> Subject(t.SupMsg) {
+pub fn sup_ctx(supstate: t.SupState, conn: pog.Connection) -> Subject(t.SupMsg) {
   let assert Ok(sup_subj) = {
-    // t.SupState(process.new_subject(), ctx(), roomsupbox:)
-    // |> actor.start(sup_handler)
-    use msg, state <- actor.start(t.SupState(
-      process.new_subject(),
-      ctx(),
-      roomsupbox:,
-    ))
+    use msg, state <- actor.start(supstate)
     sup_handler(msg, state, conn)
   }
   sup_subj
@@ -180,7 +229,7 @@ fn sup_handler(
       case wf.create_user_process(user, state.roomsupbox, state.ctx, conn) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
-          t.AddToCtx(user.user_id.id, subj.0)
+          t.AddToCtx(user.user_id.id, subj)
           |> actor.send(state.ctx, _)
           actor.continue(state)
         }
@@ -195,12 +244,33 @@ fn sup_handler(
       |> actor.send(state.ctx, _)
       actor.continue(state)
     }
+    t.GETUSERSESSION(userid, reply_to) -> {
+      let ctx_shipment = process.new_subject()
+      // subject for listeneing to code
+      // case dict.get(state.ctx, userid) { todo }
+      echo "recieved incoming GETUSERSESSION message"
+      echo msg
+
+      t.FetchUserSession(userid.id, ctx_shipment)
+      |> actor.send(state.ctx, _)
+      case process.receive(ctx_shipment, 5000) {
+        Error(_) -> {
+          echo "failed to Fetch user subjects"
+          actor.continue(state)
+        }
+        Ok(response) -> {
+          echo "successfully fetched user subjects"
+          process.send(reply_to, response)
+          actor.continue(state)
+        }
+      }
+    }
   }
 }
 
 // Room Context Functions
 
-fn rmctxprx() -> Subject(t.RmMsg) {
+pub fn rmctxprx() -> Subject(t.RmMsg) {
   let assert Ok(rmsubj) =
     t.RmState(dict.new())
     |> actor.start(rmhandler)
@@ -237,6 +307,22 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
           }
         }
       }
+    t.BCT(roomid, userid, user_client, user_mailbox) -> {
+      echo "-------NEW CONNECTION REQUEST-------"
+      case dict.get(state.registry, roomid) {
+        Error(_) -> actor.continue(state)
+        Ok(roomsubj) -> {
+          wt.CONNECT(
+            userid: users.UserId(userid),
+            process_id: process.subject_owner(user_mailbox),
+            user_session_process: user_client,
+            user_mailbox_process: user_mailbox,
+          )
+          |> actor.send(roomsubj, _)
+          actor.continue(state)
+        }
+      }
+    }
     t.SEND(roomid, msg) -> {
       echo "::::IN ROOM SUP::::   "
       echo msg
@@ -258,34 +344,29 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
 fn room_supervisor(
   roombox: Subject(t.RmMsg),
   conn: pog.Connection,
+  supstate_box: process.Subject(t.SupMsg),
 ) -> Subject(t.RmSupMsg) {
   let assert Ok(room_sup_subj) = {
     // t.RmSupState(process.new_subject(), roombox)
     // |> actor.start(room_sup_handler())
     use msg, state <- actor.start(t.RmSupState(process.new_subject(), roombox))
-    room_sup_handler(msg, state, conn)
+    room_sup_handler(msg, state, conn, supstate_box)
   }
   room_sup_subj
 }
 
 fn get_rooms(conn: pog.Connection) -> Option(List(t.RmSupMsg)) {
-  let newtask =
-    task.async(fn() {
-      case sql.fetch_all_rooms(conn) {
-        Error(_) -> []
-        Ok(pog.Returned(_, rows)) -> {
-          case rows {
-            [] -> []
-            _ -> {
-              list.map(rows, fn(x) {
-                echo x
-                t.NEWROOM(users.UserId(x.id), cap(x.capacity), x.name, x.id)
-              })
-            }
-          }
-        }
+  let newtask = {
+    use <- task.async()
+    case sql.fetch_all_rooms(conn) {
+      Error(_) -> []
+      Ok(pog.Returned(_, rows)) -> {
+        use x <- list.map(rows)
+        echo x
+        t.NEWROOM(users.UserId(x.id), cap(x.capacity), x.name, x.id)
       }
-    })
+    }
+  }
   case task.await_forever(newtask) {
     [] -> None
     val -> Some(val)

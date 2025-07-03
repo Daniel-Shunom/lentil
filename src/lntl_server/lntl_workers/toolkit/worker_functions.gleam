@@ -44,7 +44,10 @@ pub fn create_user_process(
   ctx_subj: process.Subject(t.CtxMsg),
   conn: pog.Connection,
 ) -> Result(
-  #(process.Subject(wt.SessionOperationMessage), String),
+  #(
+    process.Subject(wt.SessionOperationMessage),
+    process.Subject(wt.RoomMessageStream),
+  ),
   users.USERCREATIONERROR,
 ) {
   create_user_process_helper_supervisor(user, roomsupbox, ctx_subj, conn)
@@ -82,9 +85,13 @@ fn room_session_handler(
       wt.INCOMING(roomid: session_state.room_data.room_id.id, message: message)
       |> actor.send(client_taskinbox, _)
       let tmp_msg = wt.INCOMING(session_state.room_data.room_id.id, new_message)
-      let mailman = actor.send(_, tmp_msg)
-      set.each(session_state.broadcast_pool, mailman)
-      echo "----------broadcasting----------"
+      let mailman = fn() {
+        echo "----------broadcasting----------"
+        echo "SIZE OF POOL: "
+          <> int.to_string(set.size(session_state.broadcast_pool))
+        actor.send(_, tmp_msg)
+      }
+      set.each(session_state.broadcast_pool, mailman())
       actor.continue(new_state)
     }
     wt.CONNECT(userid, pid, client, client_mailbox) -> {
@@ -302,6 +309,9 @@ fn user_session_handler(
       }
     }
     wt.SENDTOROOM(roomid, message) -> {
+      echo "----user process recieved message----"
+      echo roomid
+      echo "-----------------end-----------------"
       wt.SENDMESSAGE(message, session_state.task_inbox)
       |> t.SEND(roomid.id, _)
       |> actor.send(roombox, _)
@@ -414,6 +424,8 @@ fn message_stream_handler(message, _) -> actor.Next(wt.RoomMessageStream, Nil) {
 
 fn init_message_stream_mailbox() -> process.Subject(wt.RoomMessageStream) {
   let assert Ok(mailbox) = actor.start(Nil, message_stream_handler)
+  echo "started mailbox actor"
+  echo mailbox
   mailbox
 }
 
@@ -452,7 +464,7 @@ fn create_user_process_helper_supervisor(
   echo "::::::STARTED SUPERVISOR FOR USER::::::"
   let assert Ok(actor_subj) = process.receive(parent, 1000)
   echo "::::::RECIEVED ACTUAL PROCESS ACTOR FOR USER::::::"
-  Ok(#(actor_subj, new_session_id))
+  Ok(#(actor_subj, inbox))
 }
 
 // pub fn start_sup_supervisor(
@@ -491,9 +503,14 @@ fn new(
   echo "::::::CREATED SUPERVISOR FOR USER::::::"
   actor.start_spec(actor.Spec(
     fn() {
+      echo "user supervisor's current user session state: "
+      echo arg
       let worker_subj = process.new_subject()
       process.send(parent, worker_subj)
-      t.AddToCtx(arg.user.user_id.id, worker_subj)
+      t.AddToCtx(arg.user.user_id.id, #(
+        worker_subj,
+        init_message_stream_mailbox(),
+      ))
       |> actor.send(ctx_subj, _)
       process.new_selector()
       |> process.selecting(worker_subj, function.identity)
