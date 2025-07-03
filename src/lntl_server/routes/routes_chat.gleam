@@ -1,11 +1,11 @@
-import gleam/function
 import gleam/bytes_tree
 import gleam/dynamic/decode
 import gleam/erlang/process
+import gleam/function
 
 //import gleam/http
 import gleam/http/response
-import gleam/option.{type Option, None,Some}
+import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
 import global/ctx/ctx
 import global/ctx/types as t
@@ -49,9 +49,14 @@ pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) 
               let handler = fn(state, conn, msg) {
                 ws_handler(state, conn, msg, ctx, roomid)
               }
-              
+
               // Send a message to add user proc to broadcast
-              mist.websocket(req, handler, on_init(_, userid, roomid, ctx), on_close)
+              mist.websocket(
+                req,
+                handler,
+                on_init(_, userid, roomid, ctx),
+                on_close,
+              )
             }
           }
         }
@@ -76,17 +81,22 @@ fn ws_handler(
     }
 
     mist.Custom(room_msg) -> {
-      let msg = room_msg.message.message_content
-      let _ = mist.send_text_frame(connection, "INCOMING MESSAGE: " <> msg)
-      case mist.send_text_frame(connection, msg) {
-        Ok(_) -> actor.continue(state)
-        Error(reason) -> {
-          echo reason
+      case room_msg {
+        wt.SUBSCRIBEWS(_) -> {
+          wisp.log_alert("FORBIDDEN OPERATION")
           actor.continue(state)
         }
+        wt.INCOMING(_, msg) -> {
+          let msg = msg.message_content
+          case mist.send_text_frame(connection, "INCOMING MESSAGE: " <> msg) {
+            Ok(_) -> actor.continue(state)
+            Error(reason) -> {
+              echo reason
+              actor.continue(state)
+            }
+          }
+        }
       }
-
-      actor.continue(state)
     }
     _ -> actor.continue(state)
   }
@@ -96,11 +106,12 @@ fn on_init(
   connection: mist.WebsocketConnection,
   userid: String,
   roomid: String,
-  context: ctx.Context
+  context: ctx.Context,
 ) -> #(WsState, Option(process.Selector(wt.RoomMessageStream))) {
   // TODO -> validate this userid
   let _ = mist.send_text_frame(connection, "WELCOME TO ROOM " <> roomid)
-  t.ADDTOBROADCAST(users.UserId(userid), roomid)
+  let ws_inbox = process.new_subject()
+  t.ADDTOBROADCAST(users.UserId(userid), roomid, ws_inbox)
   |> actor.send(context.roomsupbox, _)
 
   let shipment = process.new_subject()
@@ -113,9 +124,9 @@ fn on_init(
       #(WsState(users.UserId(userid)), None)
     }
     Ok(package) -> {
-      let reciever = 
+      let reciever =
         process.new_selector()
-        |> process.selecting(package.1, function.identity)
+        |> process.selecting(ws_inbox, function.identity)
       wisp.log_notice("SUCCESSFULLY RETREIVED USER PACKAGE")
       echo package
       #(WsState(users.UserId(userid)), Some(reciever))
