@@ -423,7 +423,7 @@ fn message_stream_handler(
   Option(process.Subject(wt.RoomMessageStream)),
 ) {
   case message {
-    wt.INCOMING(roomid, msg)  -> {
+    wt.INCOMING(roomid, msg) -> {
       case state {
         option.None -> actor.continue(state)
         option.Some(subscriber) -> {
