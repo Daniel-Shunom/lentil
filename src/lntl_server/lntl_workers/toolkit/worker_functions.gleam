@@ -2,6 +2,7 @@ import gleam/dict
 import gleam/erlang/process
 import gleam/int
 import gleam/list
+import gleam/option.{type Option}
 import gleam/otp/actor
 import gleam/otp/supervisor
 
@@ -74,7 +75,7 @@ fn room_session_handler(
         }
       }
     }
-    wt.SENDMESSAGE(message, client_taskinbox) -> {
+    wt.SENDMESSAGE(message, _) -> {
       let new_message =
         msg.Message(..sanitize_message(message), message_code: msg.DELIVERED)
       // TODO -> PLEASE FIX THIS!!
@@ -82,8 +83,8 @@ fn room_session_handler(
       echo new_message
       let new_bin = list.prepend(session_state.retry_bin, new_message)
       let new_state = wt.RoomSession(..session_state, retry_bin: new_bin)
-      wt.INCOMING(roomid: session_state.room_data.room_id.id, message: message)
-      |> actor.send(client_taskinbox, _)
+      // wt.INCOMING(roomid: session_state.room_data.room_id.id, message: message)
+      // |> actor.send(client_taskinbox, _)
       let tmp_msg = wt.INCOMING(session_state.room_data.room_id.id, new_message)
       let mailman = fn() {
         echo "----------broadcasting----------"
@@ -414,16 +415,35 @@ fn new_room_sup(
   ))
 }
 
-fn message_stream_handler(message, _) -> actor.Next(wt.RoomMessageStream, Nil) {
-  let wt.INCOMING(roomid: a, message: b) = message
-  // todo as "send message back to user or cache in a database"
-  echo "incoming from room: " <> a
-  echo b
-  actor.continue(Nil)
+fn message_stream_handler(
+  message,
+  state: Option(process.Subject(wt.RoomMessageStream)),
+) -> actor.Next(
+  wt.RoomMessageStream,
+  Option(process.Subject(wt.RoomMessageStream)),
+) {
+  case message {
+    wt.INCOMING(roomid, msg)  -> {
+      case state {
+        option.None -> actor.continue(state)
+        option.Some(subscriber) -> {
+          wt.INCOMING(roomid, msg)
+          |> actor.send(subscriber, _)
+          actor.continue(state)
+        }
+      }
+    }
+    wt.SUBSCRIBEWS(mailbox) -> {
+      let new_state = option.Some(mailbox)
+      actor.continue(new_state)
+    }
+  }
 }
 
-fn init_message_stream_mailbox() -> process.Subject(wt.RoomMessageStream) {
-  let assert Ok(mailbox) = actor.start(Nil, message_stream_handler)
+fn init_message_stream_mailbox(
+  ws_inbox: Option(process.Subject(wt.RoomMessageStream)),
+) -> process.Subject(wt.RoomMessageStream) {
+  let assert Ok(mailbox) = actor.start(ws_inbox, message_stream_handler)
   echo "started mailbox actor"
   echo mailbox
   mailbox
@@ -436,8 +456,9 @@ fn create_user_process_helper_supervisor(
   conn: pog.Connection,
 ) {
   let new_session_id = generate_session_id(wt.USERSESSION)
+  let ws_state = option.None
   let owned = get_owned_rooms(user, conn)
-  let inbox = init_message_stream_mailbox()
+  let inbox = init_message_stream_mailbox(ws_state)
   let member =
     get_member_rooms(user, conn)
     |> list.map(fn(id) { #(id, process.new_subject()) })
@@ -454,7 +475,7 @@ fn create_user_process_helper_supervisor(
     )
   let parent = process.new_subject()
   let worker =
-    fn(_) { new(new_user_session, parent, roomsupbox, ctx_subj) }
+    fn(_) { new(new_user_session, parent, ws_state, roomsupbox, ctx_subj) }
     |> supervisor.worker()
 
   let assert Ok(_) =
@@ -494,6 +515,7 @@ fn create_user_process_helper_supervisor(
 fn new(
   arg: wt.UserSession,
   parent: process.Subject(process.Subject(wt.SessionOperationMessage)),
+  ws_inbox: Option(process.Subject(wt.RoomMessageStream)),
   roomsupbox: process.Subject(t.RmMsg),
   ctx_subj: process.Subject(t.CtxMsg),
 ) {
@@ -509,7 +531,7 @@ fn new(
       process.send(parent, worker_subj)
       t.AddToCtx(arg.user.user_id.id, #(
         worker_subj,
-        init_message_stream_mailbox(),
+        init_message_stream_mailbox(ws_inbox),
       ))
       |> actor.send(ctx_subj, _)
       process.new_selector()
