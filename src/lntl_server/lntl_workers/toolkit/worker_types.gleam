@@ -50,7 +50,12 @@ pub type UserSession {
 // This type indicates the type of messages a room session
 // can have.
 pub type RoomMessageStream {
+  SUBSCRIBEWS(mailbox: process.Subject(RoomMessageStream))
   INCOMING(roomid: String, message: msg.Message)
+}
+
+pub type ForwardToWs(msg) {
+  ForwardToWs(roomid: String, message: msg)
 }
 
 pub type RoomSessionMessage {
@@ -94,7 +99,6 @@ pub type RoomSessionMessage {
 pub type SessionOperationMessage {
   /// Register that we've got a live room process we can talk to
   ADDROOM(room_id: rooms.RoomId, room_subj: process.Subject(RoomSessionMessage))
-
   /// Send a chat into a room you’ve joined
   SENDTOROOM(room_id: rooms.RoomId, text: msg.Message)
   MESSAGEDELIVERED(msg.Message)
