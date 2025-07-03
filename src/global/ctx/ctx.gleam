@@ -87,7 +87,7 @@ pub fn room_sup_handler(
           actor.continue(state)
         }
       }
-    t.ADDTOBROADCAST(userid, roomid) -> {
+    t.ADDTOBROADCAST(userid, roomid, ws_inbox) -> {
       echo "******************************"
       echo "*                            *"
       echo "*  Adding user to broadcast  *"
@@ -111,6 +111,8 @@ pub fn room_sup_handler(
           echo data
           t.BCT(roomid, userid.id, data.0, data.1)
           |> actor.send(state.context, _)
+          wt.SUBSCRIBEWS(mailbox: ws_inbox)
+          |> actor.send(data.1, _)
           actor.continue(state)
         }
       }

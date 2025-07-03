@@ -8,7 +8,7 @@ import users/types/users.{type User, type UserId}
 
 pub type RmSupMsg {
   DELROOM(sessionid: String)
-  ADDTOBROADCAST(userid: UserId, roomid: String)
+  ADDTOBROADCAST(userid: UserId, roomid: String, ws_inbox: process.Subject(wt.RoomMessageStream))
   NEWROOM(
     userid: UserId,
     capacity: rooms.RoomCapacity,
