@@ -119,13 +119,18 @@ fn room_session_handler(
         }
       }
     }
-    wt.DISCONNECT(user, pid, client) -> {
-      let search = fn(x) { x != user }
+    wt.DISCONNECT(userid, pid, client, client_mailbox) -> {
+      let search = fn(x) { x != userid }
       case list.any(session_state.room_data.room_members, search) {
         True -> {
           let new_registry = set.delete(session_state.connection_registry, pid)
+          let new_broadcast_pool = set.delete(session_state.broadcast_pool, client_mailbox)
           let new_state =
-            wt.RoomSession(..session_state, connection_registry: new_registry)
+            wt.RoomSession(
+              ..session_state, 
+              connection_registry: new_registry,
+              broadcast_pool: new_broadcast_pool
+            )
           wt.SUCCESS(m.client_room_disconnect_success)
           |> actor.send(client, _)
           actor.continue(new_state)
@@ -422,8 +427,11 @@ fn message_stream_handler(
   wt.RoomMessageStream,
   Option(process.Subject(wt.RoomMessageStream)),
 ) {
+  // TODO -> on the off chance that there are still emssages 
+  // still in the user suject, we wait/add dely to clear those 
+  // messages.
   case message {
-    wt.INCOMING(roomid, msg) -> {
+    wt.INCOMING(roomid, msg)  -> {
       case state {
         option.None -> actor.continue(state)
         option.Some(subscriber) -> {
@@ -437,6 +445,7 @@ fn message_stream_handler(
       let new_state = option.Some(mailbox)
       actor.continue(new_state)
     }
+    wt.UNSUBSCRIBEWS -> actor.continue(option.None)
   }
 }
 

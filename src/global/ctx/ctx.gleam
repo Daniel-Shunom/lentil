@@ -122,6 +122,25 @@ pub fn room_sup_handler(
       // |> actor.send(state.context, _)
       actor.continue(state)
     }
+    t.REMOVEFROMBROADCAST(userid, roomid) -> {
+      let temp_s = process.new_subject()
+      t.GETUSERSESSION(userid, temp_s)
+      |> process.send(rmsup, _)
+
+      case process.receive(temp_s, 1000) {
+        Error(_) -> {
+          echo "failed to get user process from registry"
+          actor.continue(state)
+        }
+        Ok(data) -> {
+          echo "fetched user process from registry: "
+          echo data
+          t.RMBCT(roomid, userid.id, data.0, data.1)
+          |> actor.send(state.context, _)
+          actor.continue(state)
+        }
+      }
+    }
   }
 }
 
@@ -320,6 +339,20 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
             user_session_process: user_client,
             user_mailbox_process: user_mailbox,
           )
+          |> actor.send(roomsubj, _)
+          actor.continue(state)
+        }
+      }
+    }
+    t.RMBCT(roomid, userid, user_client, ws_inbox) -> {
+      case dict.get(state.registry, roomid) {
+        // TODO -> ideally, we should be able to bubble messages
+        // back up to the client to notify of errors, instead of 
+        // passing generic error messages.
+        Error(_) -> actor.continue(state)
+        Ok(roomsubj) -> {
+          let userpid = process.subject_owner(user_client)
+          wt.DISCONNECT(users.UserId(userid), userpid, user_client, ws_inbox)
           |> actor.send(roomsubj, _)
           actor.continue(state)
         }
