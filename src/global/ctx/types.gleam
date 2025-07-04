@@ -13,6 +13,10 @@ pub type RmSupMsg {
     roomid: String,
     ws_inbox: process.Subject(wt.RoomMessageStream),
   )
+  REMOVEFROMBROADCAST(
+    userid: UserId, 
+    roomid: String, 
+  )
   NEWROOM(
     userid: UserId,
     capacity: rooms.RoomCapacity,
@@ -22,8 +26,8 @@ pub type RmSupMsg {
 }
 
 pub type SupMsg {
-  ADD(User)
-  REM(String)
+  ADD(user: User)
+  REM(userid: String)
   MSG(userid: UserId, roomid: String, message: String)
   GETUSERSESSION(
     user_id: users.UserId,
@@ -46,6 +50,11 @@ pub type RmMsg {
     user_client: process.Subject(wt.SessionOperationMessage),
     user_mailbox: process.Subject(wt.RoomMessageStream),
   )
+  RMBCT(
+    roomid: String, 
+    userid: String, 
+    user_client: process.Subject(wt.SessionOperationMessage),
+    ws_inbox: process.Subject(wt.RoomMessageStream))
 }
 
 pub type CtxMsg {

@@ -50,6 +50,7 @@ pub type UserSession {
 // This type indicates the type of messages a room session
 // can have.
 pub type RoomMessageStream {
+  UNSUBSCRIBEWS
   SUBSCRIBEWS(mailbox: process.Subject(RoomMessageStream))
   INCOMING(roomid: String, message: msg.Message)
 }
@@ -68,9 +69,10 @@ pub type RoomSessionMessage {
     user_mailbox_process: process.Subject(RoomMessageStream),
   )
   DISCONNECT(
-    users.UserId,
-    process.Pid,
-    process.Subject(SessionOperationMessage),
+    userid: users.UserId,
+    user_process: process.Pid,
+    user_process_subject: process.Subject(SessionOperationMessage),
+    user_mailbox_process: process.Subject(RoomMessageStream),
   )
   LEAVE(users.UserId, process.Pid, process.Subject(SessionOperationMessage))
   JOIN(users.UserId, process.Pid, process.Subject(SessionOperationMessage))
