@@ -55,7 +55,7 @@ pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) 
                 req,
                 handler,
                 on_init(_, userid, roomid, ctx),
-                on_close,
+                on_close(_, roomid, ctx),
               )
             }
           }
@@ -83,6 +83,10 @@ fn ws_handler(
     mist.Custom(room_msg) -> {
       case room_msg {
         wt.SUBSCRIBEWS(_) -> {
+          wisp.log_alert("FORBIDDEN OPERATION")
+          actor.continue(state)
+        }
+        wt.UNSUBSCRIBEWS -> {
           wisp.log_alert("FORBIDDEN OPERATION")
           actor.continue(state)
         }
@@ -134,8 +138,9 @@ fn on_init(
   }
 }
 
-fn on_close(_) -> Nil {
-  wisp.configure_logger()
+fn on_close(state: WsState, roomid: String, context: ctx.Context) -> Nil {
+  t.REMOVEFROMBROADCAST(state.userid, roomid)
+  |> actor.send(context.roomsupbox, _)
   wisp.log_info("closed web socket")
 }
 
