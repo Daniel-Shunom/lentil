@@ -11,10 +11,10 @@ pub type ClientState {
   // on your account, and from which location it is coming
   // from. But obviously that needs it's own timeline :)
   ClientState(
-    userid: users.UserId,
-    auth_status: Bool,
-    auth_attempt_count: Int,
-    auth_method: option.Option(String),
+    user_id: users.UserId,
+    user_auth_status: Bool,
+    user_auth_attempt_count: Int,
+    user_auth_method: option.Option(String),
     user_uptime: option.Option(Int),
     user_message_per_second: Int,
     user_ip_address: option.Option(String),
@@ -29,6 +29,27 @@ pub type ClientState {
   )
 }
 
-pub type CentralClientState {
-  CentralClientState(registry: dict.Dict(users.UserId, ClientState))
+pub type ServerState {
+  ServerState(
+    server_node_id: String,
+    server_uptime: Int,
+    server_cpu_usage: Float,
+    server_memory_usage: Float,
+    server_active_rooms: Int,
+    server_active_users: Int,
+    server_message_throughput: Int,
+    server_error_rate: Float,
+    server_last_heartbeat: gtypes.LentilTimeStamp,
+    server_disk_io: Float,
+    server_queue_depth: Int,
+    server_crashed_processes: Int,
+    server_load_average: Float,
+  )
+}
+
+pub type CentralState {
+  CentralState(
+    central_user_registry: dict.Dict(users.UserId, ClientState),
+    central_server_state: ServerState,
+  )
 }
