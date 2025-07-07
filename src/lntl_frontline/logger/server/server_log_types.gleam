@@ -4,5 +4,6 @@ pub type LoggerMessage(msg) {
   LogClientEvent(mt.ClientRouterMessage(msg))
   LogServerEvent(mt.ServerRouterMessage(msg))
   FlushLogs
-  SetLogLevel(String) // Optional: dynamic verbosity
+  SetLogLevel(String)
+  // Optional: dynamic verbosity
 }
