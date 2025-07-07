@@ -37,7 +37,7 @@ pub type ClientRouterMessage(msg) {
   CLIENTRoomEvent(
     userid: String,
     roomid: String,
-    authenticated: String,
+    authenticated: Bool,
     event_type: RoomEvent,
     lntl_time: gtypes.LentilTimeStamp,
   )
@@ -94,11 +94,6 @@ pub type ServerRouterMessage(msg) {
   SERVERProcessCrash(process_id: String, reason: String)
 }
 
-pub type CentralRouterMessage(message_type) {
-  ClientRouterMessage(message_type)
-  ServerRouterMessage(message_type)
-}
-
 pub type AbuseAction {
   Warn(String)
   Throttle(String)
@@ -135,6 +130,12 @@ pub type CentralServerState {
     // register based on significant event times
     dict.Dict(gtypes.LentilTimeStamp, ServerRegistry),
   )
+}
+
+// global monitor message
+pub type GlobalMonitorMessage(message_type) {
+  ClientRouterMessage(ClientRouterMessage(message_type))
+  ServerRouterMessage(ServerRouterMessage(message_type))
 }
 
 pub type GlobalMonitorState(msg) {
