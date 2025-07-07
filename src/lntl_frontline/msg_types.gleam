@@ -1,4 +1,5 @@
 import gleam/dict
+import gleam/erlang/process
 import global/gtypes
 import users/types/users
 
@@ -133,5 +134,12 @@ pub type CentralServerState {
   CentralServerState(
     // register based on significant event times
     dict.Dict(gtypes.LentilTimeStamp, ServerRegistry),
+  )
+}
+
+pub type GlobalMonitorState(msg) {
+  GlobalMonitorState(
+    server: process.Subject(ServerRouterMessage(msg)),
+    client: process.Subject(ClientRouterMessage(msg)),
   )
 }
