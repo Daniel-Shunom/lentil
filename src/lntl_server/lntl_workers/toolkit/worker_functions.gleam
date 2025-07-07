@@ -124,12 +124,13 @@ fn room_session_handler(
       case list.any(session_state.room_data.room_members, search) {
         True -> {
           let new_registry = set.delete(session_state.connection_registry, pid)
-          let new_broadcast_pool = set.delete(session_state.broadcast_pool, client_mailbox)
+          let new_broadcast_pool =
+            set.delete(session_state.broadcast_pool, client_mailbox)
           let new_state =
             wt.RoomSession(
-              ..session_state, 
+              ..session_state,
               connection_registry: new_registry,
-              broadcast_pool: new_broadcast_pool
+              broadcast_pool: new_broadcast_pool,
             )
           wt.SUCCESS(m.client_room_disconnect_success)
           |> actor.send(client, _)
@@ -431,7 +432,7 @@ fn message_stream_handler(
   // still in the user suject, we wait/add dely to clear those 
   // messages.
   case message {
-    wt.INCOMING(roomid, msg)  -> {
+    wt.INCOMING(roomid, msg) -> {
       case state {
         option.None -> actor.continue(state)
         option.Some(subscriber) -> {
