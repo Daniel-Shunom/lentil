@@ -6,21 +6,22 @@ import gleam/dict
 pub fn start_central_state() -> state.CentralState {
   state.CentralState(
     central_user_registry: dict.new(),
-    central_server_state: state.ServerState(
-      server_node_id: option.None,
-      server_uptime: 0,
-      server_cpu_usage: 0.0,
-      server_memory_usage: 0.0,
-      server_active_rooms: 0,
-      server_active_users: 0,
-      server_message_throughput: 0,
-      server_error_rate: 0.0,
-      server_last_heartbeat: option.None,
-      server_disk_io: 0.0,
-      server_queue_depth: 0,
-      server_crashed_processes: 0,
-      server_load_average: 0.0
-    )
+    central_server_state_subject: todo
+    // central_server_state: state.ServerState(
+    //   server_node_id: option.None,
+    //   server_uptime: 0,
+    //   server_cpu_usage: 0.0,
+    //   server_memory_usage: 0.0,
+    //   server_active_rooms: 0,
+    //   server_active_users: 0,
+    //   server_message_throughput: 0,
+    //   server_error_rate: 0.0,
+    //   server_last_heartbeat: option.None,
+    //   server_disk_io: 0.0,
+    //   server_queue_depth: 0,
+    //   server_crashed_processes: 0,
+    //   server_load_average: 0.0
+    // )
   )
 }
 
