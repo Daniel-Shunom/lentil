@@ -31,7 +31,7 @@ pub type ClientState {
 
 pub type ServerState {
   ServerState(
-    server_node_id: String,
+    server_node_id: option.Option(String),
     server_uptime: Int,
     server_cpu_usage: Float,
     server_memory_usage: Float,
@@ -39,7 +39,7 @@ pub type ServerState {
     server_active_users: Int,
     server_message_throughput: Int,
     server_error_rate: Float,
-    server_last_heartbeat: gtypes.LentilTimeStamp,
+    server_last_heartbeat: option.Option(gtypes.LentilTimeStamp),
     server_disk_io: Float,
     server_queue_depth: Int,
     server_crashed_processes: Int,

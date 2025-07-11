@@ -134,6 +134,9 @@ pub type CentralServerState {
 
 // global monitor message
 pub type GlobalMonitorMessage(message_type) {
+  // The purpose of this is explicitly for easily visualizing
+  // the message types in the handler code, without much strain
+  // on the eyes.
   ClientRouterMessage(ClientRouterMessage(message_type))
   ServerRouterMessage(ServerRouterMessage(message_type))
 }
