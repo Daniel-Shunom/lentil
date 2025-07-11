@@ -51,7 +51,7 @@ pub type ServerState {
   )
 }
 
-pub type CentralClientStateAction {
+pub type CentralStateAction {
   UPDATEUserAuthStatus(userid: users.UserId, status: Bool)
   UPDATEUserAuthAttempt(userid: users.UserId)
   UPDATEUserAuthMethod(userid: users.UserId, auth_method: option.Option(String))
