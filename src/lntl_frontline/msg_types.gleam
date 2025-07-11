@@ -1,6 +1,7 @@
 import gleam/dict
 import gleam/erlang/process
 import global/gtypes
+import lntl_frontline/central/state
 import users/types/users
 
 pub type AuthEvent {
@@ -32,7 +33,7 @@ pub type ClientRouterMessage(msg) {
     userid: String,
     roomid: String,
     authenticated: Bool,
-    message: msg,
+    message_count: Int,
   )
   CLIENTRoomEvent(
     userid: String,
@@ -100,38 +101,6 @@ pub type AbuseAction {
   Block(String)
 }
 
-// NOTE -> probably needs to create a central location for the 
-//         state variables.
-
-// CLIENT STATE
-pub type ClientState
-
-pub type ClientRegistry {
-  CentralClientRegistry(
-    sessionid: String,
-    user_logs: dict.Dict(users.UserId, ClientState),
-  )
-}
-
-pub type CentralClientState {
-  CentralClientState(
-    // register
-    dict.Dict(users.UserId, ClientRegistry),
-  )
-}
-
-// SERVER STATE
-pub type ServerState
-
-pub type ServerRegistry
-
-pub type CentralServerState {
-  CentralServerState(
-    // registry based on significant event times
-    dict.Dict(gtypes.LentilTimeStamp, ServerRegistry),
-  )
-}
-
 // global monitor message
 pub type GlobalMonitorMessage(message_type) {
   // The purpose of this is explicitly for easily visualizing
@@ -145,5 +114,6 @@ pub type GlobalMonitorState(msg) {
   GlobalMonitorState(
     server: process.Subject(ServerRouterMessage(msg)),
     client: process.Subject(ClientRouterMessage(msg)),
+    central_state: process.Subject(state.CentralStateAction),
   )
 }
