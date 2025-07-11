@@ -127,7 +127,7 @@ pub type ServerRegistry
 
 pub type CentralServerState {
   CentralServerState(
-    // register based on significant event times
+    // registry based on significant event times
     dict.Dict(gtypes.LentilTimeStamp, ServerRegistry),
   )
 }
