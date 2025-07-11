@@ -58,6 +58,13 @@ fn central_state_handler(
   central_state: state.CentralState,
 ) -> actor.Next(state.CentralStateAction, state.CentralState) {
   case central_state_message {
+    state.DELETEUserState(userid) -> {
+      let new_registry =
+        dict.delete(central_state.central_user_registry, userid)
+      let new_central_state =
+        state.CentralState(..central_state, central_user_registry: new_registry)
+      actor.continue(new_central_state)
+    }
     state.UPDATEUserAuthStatus(userid, auth_status) -> {
       case dict.has_key(central_state.central_user_registry, userid) {
         False -> actor.continue(central_state)

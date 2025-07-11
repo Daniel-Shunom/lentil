@@ -52,8 +52,9 @@ pub type ServerState {
 }
 
 pub type CentralStateAction {
+  DELETEUserState(userid: users.UserId)
   UPDATEUserAuthStatus(userid: users.UserId, status: Bool)
-  UPDATEUserAuthAttempt(userid: users.UserId)
+  UPDATEUserAuthAttempt(userid: users.UserId, count: Int)
   UPDATEUserAuthMethod(userid: users.UserId, auth_method: option.Option(String))
   UPDATEUserUptime(userid: users.UserId, uptime: Int)
   UPDATEUserMessagePerSecond(userid: users.UserId, mps: Int)
