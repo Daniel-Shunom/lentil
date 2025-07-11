@@ -1,13 +1,28 @@
-import gleam/otp/supervisor
-import gleam/function
 import gleam/dict
 import gleam/erlang/process
+import gleam/function
 import gleam/option
 import gleam/otp/actor
+import gleam/otp/supervisor
 import lntl_frontline/central/state
 import users/types/users
 
-pub fn start_central_state() -> state.CentralState {
+pub fn start_central_state() {
+  let state = new_central_state()
+  let parent = process.new_subject()
+  let worker =
+    fn(_) { new_central_state_supervisor(state, parent) }
+    |> supervisor.worker()
+  let assert Ok(_) =
+    supervisor.start_spec(
+      supervisor.Spec(Nil, 300, 5, supervisor.add(_, worker)),
+    )
+
+  let assert Ok(central_state_subject) = process.receive(parent, 100)
+  central_state_subject
+}
+
+fn new_central_state() -> state.CentralState {
   state.CentralState(
     central_user_registry: dict.new(),
     central_server_state_subject: start_server_state(),
@@ -38,27 +53,308 @@ pub fn new_client_state(userid: users.UserId) -> state.ClientState {
   )
 }
 
+fn central_state_handler(
+  central_state_message: state.CentralStateAction,
+  central_state: state.CentralState,
+) -> actor.Next(state.CentralStateAction, state.CentralState) {
+  case central_state_message {
+    state.UPDATEUserAuthStatus(userid, auth_status) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(..value, user_auth_status: auth_status)
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserAuthAttempt(userid, count) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(
+              ..value,
+              user_auth_attempt_count: value.user_auth_attempt_count + count,
+            )
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserAuthMethod(userid, auth_method) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(..value, user_auth_method: auth_method)
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserUptime(userid, update) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(
+              ..value,
+              user_uptime: option.Some(
+                option.unwrap(value.user_uptime, 0) + update,
+              ),
+            )
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserMessagePerSecond(userid, mps) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(
+              ..value,
+              user_message_per_second: value.user_message_per_second + mps,
+            )
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserIpAddress(userid, ip_addr) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(..value, user_ip_address: ip_addr)
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserLastSeen(userid, last_seen) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(..value, user_last_seen: last_seen)
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserGeoLoation(userid, geo_loc) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(..value, user_geo_location: geo_loc)
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserMessageCount(userid, count) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(
+              ..value,
+              user_message_count: value.user_message_count + count,
+            )
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserErrorCount(userid, count) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(
+              ..value,
+              user_error_count: value.user_error_count + count,
+            )
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserResourceConsumption(userid, amount) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(
+              ..value,
+              user_resource_consumption_count: value.user_resource_consumption_count
+                + amount,
+            )
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+    state.UPDATEUserSessionSubject(userid, subject) -> {
+      case dict.has_key(central_state.central_user_registry, userid) {
+        False -> actor.continue(central_state)
+        True -> {
+          let new_registry_state = {
+            use options <- dict.upsert(
+              central_state.central_user_registry,
+              userid,
+            )
+            let assert option.Some(value) = options
+            state.ClientState(..value, user_session_subject: subject)
+          }
+          let new_central_state =
+            state.CentralState(
+              ..central_state,
+              central_user_registry: new_registry_state,
+            )
+          actor.continue(new_central_state)
+        }
+      }
+    }
+  }
+}
 
 /// This server process and supervisor is to be managed internally
 /// and not to be used by external consumers.
 fn start_server_state() {
   let server_state = new_server_state()
   let parent = process.new_subject()
-  let worker = 
+  let worker =
     fn(_) { new_server_state_supervisor(server_state, parent) }
     |> supervisor.worker()
-  
-  let assert Ok(_) =
-    supervisor.start_spec(supervisor.Spec(Nil, 25, 5, supervisor.add(_, worker)))
 
-  let assert Ok(server_state_subj) =
-    process.receive(parent, 1000)
+  let assert Ok(_) =
+    supervisor.start_spec(
+      supervisor.Spec(Nil, 25, 5, supervisor.add(_, worker)),
+    )
+
+  let assert Ok(server_state_subj) = process.receive(parent, 1000)
   server_state_subj
 }
 
 fn new_server_state_supervisor(
   state: state.ServerState,
-  parent: process.Subject(process.Subject(state.ServerStateAction))
+  parent: process.Subject(process.Subject(state.ServerStateAction)),
 ) {
   actor.start_spec(actor.Spec(
     fn() {
@@ -69,7 +365,24 @@ fn new_server_state_supervisor(
       |> actor.Ready(state, _)
     },
     1000,
-    server_state_handler
+    server_state_handler,
+  ))
+}
+
+fn new_central_state_supervisor(
+  state: state.CentralState,
+  parent: process.Subject(process.Subject(state.CentralStateAction)),
+) {
+  actor.start_spec(actor.Spec(
+    fn() {
+      let worker = process.new_subject()
+      process.send(parent, worker)
+      process.new_selector()
+      |> process.selecting(worker, function.identity)
+      |> actor.Ready(state, _)
+    },
+    1000,
+    central_state_handler,
   ))
 }
 
