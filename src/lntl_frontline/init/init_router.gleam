@@ -1,7 +1,6 @@
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/list
-import gleam/option
 import gleam/otp/actor
 import gleam/otp/supervisor
 import lntl_frontline/central/manager
