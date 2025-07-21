@@ -14,6 +14,7 @@ import messages/types/msg
 import pog
 import rooms/types/rooms
 import users/types/users
+import lntl_frontline/msg_types as mt
 
 // Public Types / APIs
 
@@ -23,6 +24,7 @@ pub type Context {
     db_connection: pog.Connection,
     usersupbox: Subject(t.SupMsg),
     roomsupbox: Subject(t.RmSupMsg),
+    server_monitor: Subject(mt.GlobalMonitorMessage(msg.Message)) 
   )
 }
 
@@ -30,6 +32,7 @@ pub fn get_context(
   conn: pog.Connection,
   roombox_subj: process.Subject(t.RmMsg),
   supstate_box: process.Subject(t.SupMsg),
+  monitor: Subject(mt.GlobalMonitorMessage(msg.Message)) 
 ) -> Context {
   let connection = conn
   let roombox = roombox_subj
@@ -43,6 +46,7 @@ pub fn get_context(
         db_connection: connection,
         usersupbox: usersup,
         roomsupbox: roomsup,
+        server_monitor: monitor,
       )
     }
     Some(listofinstructions) -> {
@@ -57,6 +61,7 @@ pub fn get_context(
         db_connection: connection,
         usersupbox: usersup,
         roomsupbox: roomsup,
+        server_monitor: monitor,
       )
     }
   }

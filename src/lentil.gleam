@@ -4,6 +4,7 @@ import global/functions.{connect_lentildb, get_env, initialize_env}
 import lntl_server/router/router.{router}
 import mist
 import wisp
+import lntl_frontline/init/init_router as init
 
 pub fn main() {
   wisp.configure_logger()
@@ -12,9 +13,14 @@ pub fn main() {
   let roombox_subj = rmctxprx()
   let supstate = init_supstate(roombox_subj)
   let sec = get_env("SECRET")
+  let server_monitor = init.init_global_router_actor()
   let ctx = {
     connection
-    |> get_context(roombox_subj, sup_ctx(supstate, connection))
+    |> get_context(
+      roombox_subj, 
+      sup_ctx(supstate, connection),
+      server_monitor
+    )
   }
 
   let assert Ok(_) =
