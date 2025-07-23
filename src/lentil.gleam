@@ -14,14 +14,13 @@ pub fn main() {
   let supstate = init_supstate(roombox_subj)
   let sec = get_env("SECRET")
   let server_monitor = init.init_global_router_actor()
-  let ctx = {
+  let ctx =
     connection
     |> get_context(
       roombox_subj, 
       sup_ctx(supstate, connection),
       server_monitor
     )
-  }
 
   let assert Ok(_) =
     router(_, sec, ctx)
