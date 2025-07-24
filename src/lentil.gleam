@@ -1,10 +1,10 @@
 import gleam/erlang/process
 import global/ctx/ctx.{get_context, init_supstate, rmctxprx, sup_ctx}
 import global/functions.{connect_lentildb, get_env, initialize_env}
+import lntl_frontline/init/init_router as init
 import lntl_server/router/router.{router}
 import mist
 import wisp
-import lntl_frontline/init/init_router as init
 
 pub fn main() {
   wisp.configure_logger()
@@ -14,12 +14,13 @@ pub fn main() {
   let supstate = init_supstate(roombox_subj)
   let sec = get_env("SECRET")
   let server_monitor = init.init_global_router_actor()
-  let ctx = get_context(
-    connection,
-    roombox_subj, 
-    sup_ctx(supstate, connection),
-    server_monitor
-  )
+  let ctx =
+    get_context(
+      connection,
+      roombox_subj,
+      sup_ctx(supstate, connection),
+      server_monitor,
+    )
 
   let assert Ok(_) =
     router(_, sec, ctx)
