@@ -7,6 +7,7 @@ import gleam/string
 import global/ctx/ctx
 import global/ctx/types as t
 import global/functions.{hasher}
+import lntl_frontline/msg_types as mt
 import lntl_server/sql
 import users/types/users.{type User, User}
 import wisp
@@ -23,6 +24,15 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
           let _day = 60 * 60 * 24
           let userid = #("userid", json.string(valid_user.user_id.id))
           let userauth = #("authenticated", json.bool(valid_user.user_auth))
+          let message =
+            mt.ClientRouterMessage(mt.CLIENTAuthEvent(
+              userid: valid_user.user_id.id,
+              event_type: mt.SIGNIN,
+              success: True,
+              lntl_time: functions.get_timestamp(),
+            ))
+
+          actor.send(ctx.server_monitor, message)
           t.ADD(valid_user)
           |> actor.send(ctx.usersupbox, _)
           list.new()
@@ -43,6 +53,14 @@ pub fn handle_auth_signout(req: wisp.Request, ctx: ctx.Context) -> wisp.Response
   case decode.run(json, id_decoder()) {
     Error(_) -> wisp.response(400)
     Ok(userid) -> {
+      let message =
+        mt.ClientRouterMessage(mt.CLIENTAuthEvent(
+          userid: userid,
+          event_type: mt.SIGNIN,
+          success: True,
+          lntl_time: functions.get_timestamp(),
+        ))
+      actor.send(ctx.server_monitor, message)
       t.REM(userid)
       |> actor.send(ctx.usersupbox, _)
       wisp.response(200)
