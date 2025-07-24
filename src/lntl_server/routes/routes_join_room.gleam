@@ -1,7 +1,10 @@
+import gleam/otp/actor
+import global/functions
 import gleam/bool
 import gleam/dynamic/decode
 import global/ctx/ctx
 import lntl_server/sql
+import lntl_frontline/msg_types as mt
 import wisp
 
 pub fn join_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
@@ -14,7 +17,17 @@ pub fn join_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
       // validation logic here
       case sql.add_user_to_room(ctx.db_connection, roomid, userid) {
         Error(_) -> wisp.bad_request()
-        Ok(_) -> wisp.accepted()
+        Ok(_) -> {
+          mt.ClientRouterMessage(mt.CLIENTRoomEvent(
+            userid: userid,
+            roomid: roomid,
+            authenticated: auth,
+            event_type: mt.JOINROOM,
+            lntl_time: functions.get_timestamp()
+          ))
+          |> actor.send(ctx.server_monitor, _)
+          wisp.accepted()
+        }
       }
     }
   }
