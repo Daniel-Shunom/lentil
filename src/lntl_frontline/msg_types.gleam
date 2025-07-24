@@ -1,4 +1,3 @@
-import gleam/dict
 import gleam/erlang/process
 import global/gtypes
 import lntl_frontline/central/state
