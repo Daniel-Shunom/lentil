@@ -1,10 +1,10 @@
-import gleam/otp/actor
-import global/functions
 import gleam/bool
 import gleam/dynamic/decode
+import gleam/otp/actor
 import global/ctx/ctx
-import lntl_server/sql
+import global/functions
 import lntl_frontline/msg_types as mt
+import lntl_server/sql
 import wisp
 
 pub fn join_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
@@ -23,7 +23,7 @@ pub fn join_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
             roomid: roomid,
             authenticated: auth,
             event_type: mt.JOINROOM,
-            lntl_time: functions.get_timestamp()
+            lntl_time: functions.get_timestamp(),
           ))
           |> actor.send(ctx.server_monitor, _)
           wisp.accepted()

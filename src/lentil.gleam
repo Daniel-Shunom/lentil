@@ -2,8 +2,8 @@ import gleam/erlang/process
 import global/ctx/ctx.{get_context, init_supstate, rmctxprx, sup_ctx}
 import global/functions.{connect_lentildb, get_env, initialize_env}
 import lntl_frontline/init/init_router as init
-import lntl_server/router/router.{router}
 import lntl_frontline/monitor_router.{monitor_router}
+import lntl_server/router/router.{router}
 import mist
 import wisp
 
@@ -23,14 +23,18 @@ pub fn main() {
       server_monitor,
     )
 
-  let _ = process.start(fn() {
-    let assert Ok(_) =  
-      monitor_router(_, sec)
-      |> mist.new()
-      |> mist.port(5050)
-      |> mist.start_http()
-    process.sleep_forever()
-  }, False)
+  let _ =
+    process.start(
+      fn() {
+        let assert Ok(_) =
+          monitor_router(_, sec)
+          |> mist.new()
+          |> mist.port(5050)
+          |> mist.start_http()
+        process.sleep_forever()
+      },
+      False,
+    )
 
   let assert Ok(_) =
     router(_, sec, ctx)
