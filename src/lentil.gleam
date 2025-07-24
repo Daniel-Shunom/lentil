@@ -23,16 +23,19 @@ pub fn main() {
       server_monitor,
     )
 
+  let _ = process.start(fn() {
+    let assert Ok(_) =  
+      monitor_router(_, sec)
+      |> mist.new()
+      |> mist.port(5050)
+      |> mist.start_http()
+    process.sleep_forever()
+  }, False)
+
   let assert Ok(_) =
     router(_, sec, ctx)
     |> mist.new()
     |> mist.port(8000)
-    |> mist.start_http()
-
-  let assert Ok(_) =  
-    monitor_router(_, sec)
-    |> mist.new()
-    |> mist.port(5000)
     |> mist.start_http()
 
   process.sleep_forever()
