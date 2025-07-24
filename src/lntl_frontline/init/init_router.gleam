@@ -57,9 +57,6 @@ pub fn global_router_handler(
 ) {
   case central_router_message {
     mt.ClientRouterMessage(client_message) -> {
-      // To send messages, I am using a list of messages to be fired at once
-      // given that we can save number of times we would have to rewrite the 
-      // actor.send logic
       case client_message {
         mt.CLIENTAuthEvent(userid, _roomid, is_authenticated, _time) -> {
           let messages = [
@@ -92,7 +89,7 @@ pub fn global_router_handler(
           }
         }
         mt.CLIENTRoomEvent(userid, roomid, auth, event_type, time) -> {
-          todo
+          actor.continue(central_router_state)
         }
         mt.CLIENTFetchResource(userid, auth, resource_type, time) -> {
           let messages = [
@@ -106,19 +103,23 @@ pub fn global_router_handler(
           actor.continue(central_router_state)
         }
         mt.CLIENTTokenIssued(userid, method, time) -> {
-          todo
+          actor.continue(central_router_state)
         }
         mt.CLIENTTokenRevoked(userid, reason, time) -> {
-          todo
+          state.DELETEUserState(users.UserId(userid))
+          |> actor.send(central_router_state.central_state, _)
+          actor.continue(central_router_state)
         }
         mt.CLIENTProtocolViolation(userid, raw, time) -> {
-          todo
+          actor.continue(central_router_state)
         }
         mt.CLIENTMalformedMessage(userid, raw, time) -> {
-          todo
+          state.DELETEUserState(users.UserId(userid))
+          |> actor.send(central_router_state.central_state, _)
+          actor.continue(central_router_state)
         }
         mt.CLIENTLatencyReport(userid, ping_ms, time) -> {
-          todo
+          actor.continue(central_router_state)
         }
       }
     }
@@ -131,19 +132,19 @@ pub fn global_router_handler(
           active_members,
           message_channel_statue,
         ) -> {
-          todo
+          actor.continue(central_router_state)
         }
         mt.SERVERUserThrottled(userid, reason) -> {
-          todo
+          actor.continue(central_router_state)
         }
         mt.SERVERUserBlocked(userid, reason) -> {
-          todo
+          actor.continue(central_router_state)
         }
         mt.SERVERNodeLoad(cpu, mem, time) -> {
-          todo
+          actor.continue(central_router_state)
         }
         mt.SERVERProcessCrash(process_id, reason) -> {
-          todo
+          actor.continue(central_router_state)
         }
       }
     }
