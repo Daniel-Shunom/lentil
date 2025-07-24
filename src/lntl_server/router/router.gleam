@@ -1,4 +1,3 @@
-import lntl_server/routes/routes_leave_room
 import gleam/http
 import global/ctx/ctx
 import lntl_server/middleware/lentilite.{middleware}
@@ -8,6 +7,7 @@ import lntl_server/routes/routes_create_room
 import lntl_server/routes/routes_create_user
 import lntl_server/routes/routes_delete_room
 import lntl_server/routes/routes_join_room
+import lntl_server/routes/routes_leave_room
 import lntl_server/routes/routes_profile
 import wisp
 import wisp/wisp_mist
