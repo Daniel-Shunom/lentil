@@ -1,3 +1,4 @@
+import lntl_server/routes/routes_leave_room
 import gleam/http
 import global/ctx/ctx
 import lntl_server/middleware/lentilite.{middleware}
@@ -49,6 +50,11 @@ fn server_routing(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
       routes_create_room.handle_create_room(req, ctx)
     }
 
+    ["rooms", "editroom"] -> {
+      use <- wisp.require_method(req, http.Post)
+      routes_leave_room.handle_leave_room(req, ctx)
+    }
+
     ["rooms", "deleteroom"] -> {
       use <- wisp.require_method(req, http.Delete)
       routes_delete_room.handle_delete_room(req, ctx)
@@ -57,6 +63,11 @@ fn server_routing(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
     ["rooms", "joinroom"] -> {
       use <- wisp.require_method(req, http.Post)
       routes_join_room.join_room(req, ctx)
+    }
+
+    ["rooms", "leaveroom"] -> {
+      use <- wisp.require_method(req, http.Post)
+      routes_leave_room.handle_leave_room(req, ctx)
     }
 
     _ -> wisp.bad_request()
