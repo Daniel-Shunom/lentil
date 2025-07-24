@@ -2,13 +2,13 @@ import gleam/bytes_tree
 import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/function
-
-//import gleam/http
 import gleam/http/response
 import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
 import global/ctx/ctx
 import global/ctx/types as t
+import global/functions as gf
+import lntl_frontline/msg_types as mt
 import lntl_server/lntl_workers/toolkit/worker_types as wt
 import lntl_server/sql
 import mist
@@ -118,6 +118,15 @@ fn on_init(
   t.ADDTOBROADCAST(users.UserId(userid), roomid, ws_inbox)
   |> actor.send(context.roomsupbox, _)
 
+  mt.ClientRouterMessage(mt.CLIENTRoomEvent(
+    userid: userid,
+    roomid: roomid,
+    authenticated: True,
+    event_type: mt.JOINROOMSESSION,
+    lntl_time: gf.get_timestamp(),
+  ))
+  |> actor.send(context.server_monitor, _)
+
   let shipment = process.new_subject()
   t.GETUSERSESSION(users.UserId(userid), shipment)
   |> process.send(context.usersupbox, _)
@@ -139,6 +148,15 @@ fn on_init(
 }
 
 fn on_close(state: WsState, roomid: String, context: ctx.Context) -> Nil {
+  mt.ClientRouterMessage(mt.CLIENTRoomEvent(
+    userid: state.userid.id,
+    roomid: roomid,
+    authenticated: True,
+    event_type: mt.LEAVEROOMSESSION,
+    lntl_time: gf.get_timestamp(),
+  ))
+  |> actor.send(context.server_monitor, _)
+
   t.REMOVEFROMBROADCAST(state.userid, roomid)
   |> actor.send(context.roomsupbox, _)
   wisp.log_info("closed web socket")
