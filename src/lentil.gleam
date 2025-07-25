@@ -1,3 +1,4 @@
+import lntl_frontline/sys_utils/sys
 import gleam/erlang/process
 import global/ctx/ctx.{get_context, init_supstate, rmctxprx, sup_ctx}
 import global/functions.{connect_lentildb, get_env, initialize_env}
@@ -15,6 +16,7 @@ pub fn main() {
   let supstate = init_supstate(roombox_subj)
   let sec = get_env("SECRET")
   let server_monitor = init.init_global_router_actor()
+  let _ = sys.start_osmon(server_monitor)
   let ctx =
     get_context(
       connection,
@@ -27,7 +29,7 @@ pub fn main() {
     process.start(
       fn() {
         let assert Ok(_) =
-          monitor_router(_, sec)
+          monitor_router(_, sec, server_monitor)
           |> mist.new()
           |> mist.port(5050)
           |> mist.start_http()
