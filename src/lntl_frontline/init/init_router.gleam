@@ -1,11 +1,11 @@
-import gleam/string
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/otp/actor
 import gleam/otp/supervisor
+import gleam/string
 import lntl_frontline/central/manager
-import gleam/option.{None, Some}
 import lntl_frontline/central/state
 import lntl_frontline/msg_types as mt
 import messages/types/msg
@@ -30,7 +30,7 @@ pub fn init_global_router_actor() -> process.Subject(
       supervisor.add(_, worker)
       |> supervisor.Spec(Nil, 25, 5, _),
     )
-  
+
   let assert Ok(global_router_subject) = process.receive(parent, 1000)
   global_router_subject
 }
@@ -71,7 +71,7 @@ pub fn global_router_handler(
             use message <- list.each(messages)
             actor.send(central_router_state.central_state, message)
           }
-          
+
           let _ = {
             use subj <- option.then(central_router_state.stream_channel)
             let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
@@ -103,7 +103,7 @@ pub fn global_router_handler(
                 actor.send(subj, msg)
                 None
               }
-              
+
               actor.continue(central_router_state)
             }
           }
@@ -219,9 +219,11 @@ pub fn global_router_handler(
       }
     }
     mt.StreamChannelSubject(new_subject) -> {
-      let new_state = mt.GlobalMonitorState(
-        ..central_router_state,
-        stream_channel: Some(new_subject))
+      let new_state =
+        mt.GlobalMonitorState(
+          ..central_router_state,
+          stream_channel: Some(new_subject),
+        )
       actor.continue(new_state)
     }
   }

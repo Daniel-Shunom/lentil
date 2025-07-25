@@ -1,8 +1,8 @@
 import gleam/erlang/process
+import gleam/option.{type Option}
 import global/gtypes
 import lntl_frontline/central/state
 import users/types/users
-import gleam/option.{type Option}
 
 pub type AuthEvent {
   SIGNIN
