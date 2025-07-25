@@ -1,4 +1,4 @@
--module(sys).
+-module(sys_utils).
 -author("Daniel Jeremiah <danielshunom2@gmail.com>").
 -export([start_osmon/0, stop_osmon/0, get_mem/0, get_load/0]).
 
