@@ -1,11 +1,13 @@
+import gleam/erlang/process
 import lntl_frontline/stream/evstream
 import gleam/http
 import wisp
 import wisp/wisp_mist
+import lntl_frontline/msg_types as mt
 
-pub fn monitor_router(req, sec: String) {
+pub fn monitor_router(req, sec: String, monitor: process.Subject(mt.GlobalMonitorMessage(a))) {
   case wisp.path_segments(req) {
-    [] -> evstream.stream_serverside_events(req)
+    [] -> evstream.stream_serverside_events(req, monitor)
     _ -> wisp_mist.handler(monitor_routing, sec)(req)
   }
 }

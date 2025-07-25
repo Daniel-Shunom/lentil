@@ -1,9 +1,11 @@
+import gleam/string
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/list
 import gleam/otp/actor
 import gleam/otp/supervisor
 import lntl_frontline/central/manager
+import gleam/option.{None, Some}
 import lntl_frontline/central/state
 import lntl_frontline/msg_types as mt
 import messages/types/msg
@@ -17,6 +19,7 @@ pub fn init_global_router_actor() -> process.Subject(
       server: process.new_subject(),
       client: process.new_subject(),
       central_state: manager.start_central_state(),
+      stream_channel: None,
     )
   let parent = process.new_subject()
   let worker =
@@ -27,6 +30,7 @@ pub fn init_global_router_actor() -> process.Subject(
       supervisor.add(_, worker)
       |> supervisor.Spec(Nil, 25, 5, _),
     )
+  
   let assert Ok(global_router_subject) = process.receive(parent, 1000)
   global_router_subject
 }
@@ -67,6 +71,14 @@ pub fn global_router_handler(
             use message <- list.each(messages)
             actor.send(central_router_state.central_state, message)
           }
+          
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+            actor.send(subj, msg)
+            None
+          }
+
           actor.continue(central_router_state)
         }
         mt.CLIENTMessageEvent(userid, _roomid, auth, msg_count) -> {
@@ -84,11 +96,26 @@ pub fn global_router_handler(
                 use message <- list.each(messages)
                 actor.send(central_router_state.central_state, message)
               }
+
+              let _ = {
+                use subj <- option.then(central_router_state.stream_channel)
+                let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+                actor.send(subj, msg)
+                None
+              }
+              
               actor.continue(central_router_state)
             }
           }
         }
         mt.CLIENTRoomEvent(userid, roomid, auth, event_type, time) -> {
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+            actor.send(subj, msg)
+            None
+          }
+
           actor.continue(central_router_state)
         }
         mt.CLIENTFetchResource(userid, auth, resource_type, time) -> {
@@ -100,25 +127,68 @@ pub fn global_router_handler(
             use message <- list.each(messages)
             actor.send(central_router_state.central_state, message)
           }
+
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+            actor.send(subj, msg)
+            None
+          }
+
           actor.continue(central_router_state)
         }
         mt.CLIENTTokenIssued(userid, method, time) -> {
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+            actor.send(subj, msg)
+            None
+          }
+
           actor.continue(central_router_state)
         }
         mt.CLIENTTokenRevoked(userid, reason, time) -> {
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+            actor.send(subj, msg)
+            None
+          }
+
           state.DELETEUserState(users.UserId(userid))
           |> actor.send(central_router_state.central_state, _)
           actor.continue(central_router_state)
         }
         mt.CLIENTProtocolViolation(userid, raw, time) -> {
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+            actor.send(subj, msg)
+            None
+          }
+
           actor.continue(central_router_state)
         }
         mt.CLIENTMalformedMessage(userid, raw, time) -> {
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+            actor.send(subj, msg)
+            None
+          }
+
           state.DELETEUserState(users.UserId(userid))
           |> actor.send(central_router_state.central_state, _)
           actor.continue(central_router_state)
         }
         mt.CLIENTLatencyReport(userid, ping_ms, time) -> {
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)
+            actor.send(subj, msg)
+            None
+          }
+
           actor.continue(central_router_state)
         }
       }
@@ -147,6 +217,12 @@ pub fn global_router_handler(
           actor.continue(central_router_state)
         }
       }
+    }
+    mt.StreamChannelSubject(new_subject) -> {
+      let new_state = mt.GlobalMonitorState(
+        ..central_router_state,
+        stream_channel: Some(new_subject))
+      actor.continue(new_state)
     }
   }
 }

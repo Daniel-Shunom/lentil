@@ -2,6 +2,7 @@ import gleam/erlang/process
 import global/gtypes
 import lntl_frontline/central/state
 import users/types/users
+import gleam/option.{type Option}
 
 pub type AuthEvent {
   SIGNIN
@@ -107,6 +108,7 @@ pub type GlobalMonitorMessage(message_type) {
   // on the eyes.
   ClientRouterMessage(ClientRouterMessage(message_type))
   ServerRouterMessage(ServerRouterMessage(message_type))
+  StreamChannelSubject(process.Subject(String))
 }
 
 pub type GlobalMonitorState(msg) {
@@ -114,5 +116,6 @@ pub type GlobalMonitorState(msg) {
     server: process.Subject(ServerRouterMessage(msg)),
     client: process.Subject(ClientRouterMessage(msg)),
     central_state: process.Subject(state.CentralStateAction),
+    stream_channel: Option(process.Subject(String)),
   )
 }
