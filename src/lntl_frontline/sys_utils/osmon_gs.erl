@@ -47,14 +47,16 @@ init({GleamSubject, Interval}) ->
                 interval  = Interval,
                 timer_ref = Ref}}.
 
+% -type osmon_msg() :: {osmon_msg, integer(), integer(), integer()}.
+
 -spec handle_info(poll, #state{}) -> {noreply, #state{}}.
 handle_info(poll, State = #state{subject = Subj, interval = I}) ->
-    {TotalMem, UsedMem} = sys:get_mem(),
-    CpuLoad             = sys:get_load(),
+    {TotalMem, UsedMem} = sys_utils:get_mem(),
+    CpuLoad             = sys_utils:get_load(),
 
     OsmonMsg = {osmon_msg, TotalMem, UsedMem, CpuLoad},
 
-    ok = gleam_otp_process:send(Subj, OsmonMsg),
+    Subj ! OsmonMsg,
 
     Ref2 = erlang:send_after(I, self(), poll),
     {noreply, State#state{timer_ref = Ref2}};
