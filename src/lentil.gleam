@@ -1,9 +1,10 @@
+// import gleam/function
 import gleam/erlang/process
 import global/ctx/ctx.{get_context, init_supstate, rmctxprx, sup_ctx}
 import global/functions.{connect_lentildb, get_env, initialize_env}
 import lntl_frontline/init/init_router as init
 import lntl_frontline/monitor_router.{monitor_router}
-import lntl_frontline/sys_utils/sys_utils as sys
+import lntl_frontline/sys_utils/sys_utilsg as sys
 import lntl_server/router/router.{router}
 import mist
 import wisp
@@ -16,7 +17,13 @@ pub fn main() {
   let supstate = init_supstate(roombox_subj)
   let sec = get_env("SECRET")
   let server_monitor = init.init_global_router_actor()
-  let _ = process.start(fn() { sys.start_osmon(server_monitor) }, False)
+  let _ = process.start(fn() {
+      let _ = sys.observer()
+      let _ = sys.start_osmon(server_monitor) 
+    }, 
+    False
+  )
+
   let ctx =
     get_context(
       connection,
