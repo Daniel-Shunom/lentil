@@ -211,6 +211,12 @@ pub fn global_router_handler(
           actor.continue(central_router_state)
         }
         mt.SERVERNodeLoad(cpu, mem, time) -> {
+          let _ = {
+            use subj <- option.then(central_router_state.stream_channel)
+            let msg = "SERVERSIDE EVENT: " <> string.inspect(server_message)
+            actor.send(subj, msg)
+            None
+          }
           actor.continue(central_router_state)
         }
         mt.SERVERProcessCrash(process_id, reason) -> {
