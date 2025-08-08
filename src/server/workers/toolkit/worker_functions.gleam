@@ -6,10 +6,8 @@ import gleam/option.{type Option}
 import gleam/otp/actor
 import gleam/otp/supervisor
 
-// import gleam/otp/task
 import pog
 
-// import gleam/otp/static_supervisor.{OneForOne}
 import gleam/set
 import global/ctx/types as t
 import server/workers/toolkit/constants as m
@@ -20,7 +18,6 @@ import models/messages/types/msg
 import prng/random
 import prng/seed
 
-// import lntl_server/lntl_workers/w_room/w_session.
 import gleam/function
 import models/rooms/methods/methods
 import models/rooms/types/rooms

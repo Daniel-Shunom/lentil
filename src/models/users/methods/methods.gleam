@@ -1,9 +1,9 @@
 import gleam/bit_array
 import gleam/crypto.{Md5}
 import gleam/int
+import models/users/types/users
 import prng/random
 import prng/seed
-import models/users/types/users
 
 pub fn create_user(
   first_name name_f: String,

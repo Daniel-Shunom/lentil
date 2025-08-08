@@ -4,8 +4,8 @@ import gleam/function
 import gleam/option
 import gleam/otp/actor
 import gleam/otp/supervisor
-import utils/central/state
 import models/users/types/users
+import utils/central/state
 
 pub fn start_central_state() {
   let state = new_central_state()

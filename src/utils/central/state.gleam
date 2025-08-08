@@ -2,8 +2,8 @@ import gleam/dict
 import gleam/erlang/process
 import gleam/option
 import global/gtypes
-import server/workers/toolkit/worker_types as wt
 import models/users/types/users
+import server/workers/toolkit/worker_types as wt
 
 pub type ClientState {
   // I am thinking of implementing a notification system,

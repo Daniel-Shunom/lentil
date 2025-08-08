@@ -7,9 +7,9 @@ import gleam/string
 import global/ctx/ctx
 import global/ctx/types as t
 import global/functions.{hasher}
-import utils/msg_types as mt
-import server/sql
 import models/users/types/users.{type User, User}
+import server/sql
+import utils/msg_types as mt
 import wisp
 
 pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {

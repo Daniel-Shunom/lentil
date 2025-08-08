@@ -1,19 +1,19 @@
-import gleam/io
-import gleam/option
-import gleam/string
 import gleam/erlang/process
 import gleam/int
+import gleam/io
+import gleam/option
 import gleam/otp/actor
+import gleam/string
 import global/functions
-import utils/msg_types as mt
 import models/messages/types/msg
+import utils/msg_types as mt
 
 pub type OsmonMsg {
   OsmonMsg(
-    total_mem: Int, 
-    used_mem: Int, 
+    total_mem: Int,
+    used_mem: Int,
     cpu_load: Int,
-    resp: process.Subject(OsmonMsg)
+    resp: process.Subject(OsmonMsg),
   )
 }
 
@@ -55,19 +55,27 @@ fn handler(
 }
 
 fn poll(subj) {
-  process.send_after(subj, 300, fn() {
-    let #(total, used) = getmem()
-    let load = getload()
-    io.println(
-    "Total: " <> string.inspect(total) <> "\n"
-    <> "Used: " <> string.inspect(used) <> "\n"
-    <> "Load: " <> string.inspect(load) <> "\n\n"
-    ) 
-    OsmonMsg(total, used,  load, subj)
-  }())
+  process.send_after(
+    subj,
+    300,
+    fn() {
+      let #(total, used) = getmem()
+      let load = getload()
+      io.println(
+        "Total: "
+        <> string.inspect(total)
+        <> "\n"
+        <> "Used: "
+        <> string.inspect(used)
+        <> "\n"
+        <> "Load: "
+        <> string.inspect(load)
+        <> "\n\n",
+      )
+      OsmonMsg(total, used, load, subj)
+    }(),
+  )
 }
-
-
 
 @external(erlang, "observer", "start")
 pub fn observer() -> a

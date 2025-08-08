@@ -3,8 +3,8 @@ import gleam/otp/actor
 import gleam/result
 import global/ctx/ctx
 import global/functions
-import utils/msg_types as mt
 import server/sql
+import utils/msg_types as mt
 import wisp
 
 pub fn handle_leave_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {

@@ -2,8 +2,8 @@ import gleam/erlang/process
 import gleam/function
 import gleam/option.{type Option, Some}
 import gleam/otp/actor
-import utils/msg_types as mt
 import mist
+import utils/msg_types as mt
 
 // import wisp
 

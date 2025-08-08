@@ -1,12 +1,12 @@
 import gleam/int
 import gleam/list
 import global/functions.{get_timestamp}
-import server/sql
+import models/rooms/types/rooms
+import models/users/types/users
 import pog
 import prng/random
 import prng/seed
-import models/rooms/types/rooms
-import models/users/types/users
+import server/sql
 
 pub fn create_room(
   room_owner owner: users.UserId,

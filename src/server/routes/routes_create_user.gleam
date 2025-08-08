@@ -7,9 +7,9 @@ import gleam/string
 import global/ctx/ctx
 import global/functions.{hasher}
 
-import server/sql
 import models/users/methods/methods.{create_user}
 import models/users/types/users
+import server/sql
 import wisp
 
 pub fn handle_create_user(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {

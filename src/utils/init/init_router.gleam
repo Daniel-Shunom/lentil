@@ -5,11 +5,11 @@ import gleam/option.{None, Some}
 import gleam/otp/actor
 import gleam/otp/supervisor
 import gleam/string
+import models/messages/types/msg
+import models/users/types/users
 import utils/central/manager
 import utils/central/state
 import utils/msg_types as mt
-import models/messages/types/msg
-import models/users/types/users
 
 pub fn init_global_router_actor() -> process.Subject(
   mt.GlobalMonitorMessage(msg.Message),

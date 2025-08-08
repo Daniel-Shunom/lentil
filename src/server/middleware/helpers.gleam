@@ -2,11 +2,7 @@ import gleam/bool
 import gleam/result
 import gleam/string_tree
 import server/pages/a_def.{
-  bad_request, 
-  default_page, 
-  not_found, 
-  server_error, 
-  too_large,
+  bad_request, default_page, not_found, server_error, too_large,
 }
 import simplifile
 import wisp.{type Response}

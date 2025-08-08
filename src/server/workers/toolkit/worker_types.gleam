@@ -23,19 +23,6 @@ pub type RoomSession {
   )
 }
 
-pub type BinState {
-  BinState(
-    bin: List(msg.Message),
-    session_subject: process.Subject(RoomSessionMessage),
-    sender_subject: process.Subject(SessionOperationMessage),
-    sender_stream_box: process.Subject(RoomMessageStream),
-  )
-}
-
-pub type Retry {
-  Retry(msg.Message)
-}
-
 pub type UserSession {
   UserSession(
     session_id: String,
@@ -53,10 +40,6 @@ pub type RoomMessageStream {
   UNSUBSCRIBEWS
   SUBSCRIBEWS(mailbox: process.Subject(RoomMessageStream))
   INCOMING(roomid: String, message: msg.Message)
-}
-
-pub type ForwardToWs(msg) {
-  ForwardToWs(roomid: String, message: msg)
 }
 
 pub type RoomSessionMessage {
@@ -88,12 +71,6 @@ pub type RoomSessionMessage {
     process.Subject(SessionOperationMessage),
   )
   REMOVEMEMBER(users.UserId, process.Subject(SessionOperationMessage))
-  // TODO -> fleshout this functionality later
-  //MEMBERTIMEOUT(
-  //  users.UserId,
-  //  duration.Duration,
-  //  process.Subject(SessionOperationMessage),
-  //)
   PING(process.Pid, process.Subject(SessionOperationMessage))
   SHUTDOWN
 }
