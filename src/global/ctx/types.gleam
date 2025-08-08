@@ -2,9 +2,9 @@ import gleam/dict
 import gleam/erlang/process.{type Subject}
 
 // import gleam/option
-import lntl_server/lntl_workers/toolkit/worker_types as wt
-import rooms/types/rooms
-import users/types/users.{type User, type UserId}
+import server/lntl_workers/toolkit/worker_types as wt
+import models/rooms/types/rooms
+import models/users/types/users.{type User, type UserId}
 
 pub type RmSupMsg {
   DELROOM(sessionid: String)

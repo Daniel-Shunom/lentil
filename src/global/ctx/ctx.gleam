@@ -6,15 +6,15 @@ import gleam/otp/actor
 import gleam/otp/task
 import global/ctx/types as t
 import global/functions.{get_timestamp, id_generator}
-import lntl_frontline/msg_types as mt
-import lntl_server/lntl_workers/toolkit/worker_functions as wf
-import lntl_server/lntl_workers/toolkit/worker_types as wt
-import lntl_server/sql
-import messages/methods/methods
-import messages/types/msg
+import utils/msg_types as mt
+import server/lntl_workers/toolkit/worker_functions as wf
+import server/lntl_workers/toolkit/worker_types as wt
+import server/sql
+import models/messages/methods/methods
+import models/messages/types/msg
 import pog
-import rooms/types/rooms
-import users/types/users
+import models/rooms/types/rooms
+import models/users/types/users
 
 // Public Types / APIs
 

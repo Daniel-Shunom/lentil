@@ -2,10 +2,10 @@
 import gleam/erlang/process
 import global/ctx/ctx.{get_context, init_supstate, rmctxprx, sup_ctx}
 import global/functions.{connect_lentildb, get_env, initialize_env}
-import lntl_frontline/init/init_router as init
-import lntl_frontline/monitor_router.{monitor_router}
-import lntl_frontline/sys_utils/sys_utilsg as sys
-import lntl_server/router/router.{router}
+import utils/init/init_router as init
+import utils/monitor_router.{monitor_router}
+import utils/sys_utils/sys_utilsg as sys
+import server/router/router.{router}
 import mist
 import wisp
 
