@@ -4,7 +4,7 @@ import gleam/list
 import gleam/otp/actor
 import gleam/otp/supervisor
 import gleam/otp/task
-import server/lntl_workers/toolkit/worker_types as wt
+import server/workers/toolkit/worker_types as wt
 import models/messages/types/msg
 
 // TODO -> wire this up into the room process creator function

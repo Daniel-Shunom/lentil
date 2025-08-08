@@ -7,8 +7,8 @@ import gleam/otp/task
 import global/ctx/types as t
 import global/functions.{get_timestamp, id_generator}
 import utils/msg_types as mt
-import server/lntl_workers/toolkit/worker_functions as wf
-import server/lntl_workers/toolkit/worker_types as wt
+import server/workers/toolkit/worker_functions as wf
+import server/workers/toolkit/worker_types as wt
 import server/sql
 import models/messages/methods/methods
 import models/messages/types/msg

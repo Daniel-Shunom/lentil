@@ -12,8 +12,8 @@ import pog
 // import gleam/otp/static_supervisor.{OneForOne}
 import gleam/set
 import global/ctx/types as t
-import server/lntl_workers/toolkit/constants as m
-import server/lntl_workers/toolkit/worker_types as wt
+import server/workers/toolkit/constants as m
+import server/workers/toolkit/worker_types as wt
 import server/sql
 import models/messages/methods/methods as mt
 import models/messages/types/msg

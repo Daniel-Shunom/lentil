@@ -2,7 +2,7 @@ import gleam/dict
 import gleam/erlang/process.{type Subject}
 
 // import gleam/option
-import server/lntl_workers/toolkit/worker_types as wt
+import server/workers/toolkit/worker_types as wt
 import models/rooms/types/rooms
 import models/users/types/users.{type User, type UserId}
 

@@ -9,7 +9,7 @@ import global/ctx/ctx
 import global/ctx/types as t
 import global/functions as gf
 import utils/msg_types as mt
-import server/lntl_workers/toolkit/worker_types as wt
+import server/workers/toolkit/worker_types as wt
 import server/sql
 import mist
 import pog

@@ -2,7 +2,7 @@ import gleam/dict
 import gleam/erlang/process
 import gleam/option
 import global/gtypes
-import server/lntl_workers/toolkit/worker_types as wt
+import server/workers/toolkit/worker_types as wt
 import models/users/types/users
 
 pub type ClientState {
