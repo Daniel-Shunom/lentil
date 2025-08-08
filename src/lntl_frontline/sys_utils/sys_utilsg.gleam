@@ -1,3 +1,4 @@
+import gleam/io
 import gleam/option
 import gleam/string
 import gleam/erlang/process
@@ -17,6 +18,7 @@ pub type OsmonMsg {
 }
 
 pub fn start_osmon(subj: process.Subject(mt.GlobalMonitorMessage(msg.Message))) {
+  let _ = initialize_osmon()
   let osmon_handler = fn(msg, state) { handler(msg, state, subj) }
   let assert Ok(osmon_subj) = actor.start(option.None, osmon_handler)
   let _ = poll(osmon_subj)
@@ -32,6 +34,7 @@ fn handler(
     option.None -> {
       let new_state = message.resp
       // let 
+      poll(message.resp)
       actor.continue(option.Some(new_state))
     }
     option.Some(replsubj) -> {
@@ -52,19 +55,19 @@ fn handler(
 }
 
 pub fn poll(subj) {
-  let msg = fn() {
-    echo "SENDING PERIODICALLY TO " <> string.inspect(subj)
-    OsmonMsg(0, 0, 0, subj)
-  }
-  process.send_after(subj, 300, msg())
+  process.send_after(subj, 300, fn() {
+    let #(total, used) = getmem()
+    let load = getload()
+    io.println(
+    "Total: " <> string.inspect(total) <> "\n"
+    <> "Used: " <> string.inspect(used) <> "\n"
+    <> "Load: " <> string.inspect(load) <> "\n\n"
+    ) 
+    OsmonMsg(total, used,  load, subj)
+  }())
 }
 
-fn create_osmon(subj) {
-  OsmonMsg(0, 0, 0, subj)
-}
 
-@external(erlang, "osmon_gs", "ffi_start")
-pub fn ffi_osmon(subj: process.Pid, interval: Int) -> a
 
 @external(erlang, "observer", "start")
 pub fn observer() -> a
@@ -76,4 +79,4 @@ fn getmem() -> #(Int, Int)
 fn getload() -> Int
 
 @external(erlang, "sys_utils", "start_osmon")
-fn startosmon() -> Result(a, a)
+fn initialize_osmon() -> a
