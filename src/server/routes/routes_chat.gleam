@@ -12,7 +12,7 @@ import mist
 import models/users/types/users
 import pog
 import server/sql
-import server/workers/toolkit/worker_types as wt
+import server/workers/shared/shared_types as sm
 import utils/msg_types as mt
 import wisp
 
@@ -68,10 +68,10 @@ pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) 
 fn ws_handler(
   state: WsState,
   connection: mist.WebsocketConnection,
-  message: mist.WebsocketMessage(wt.RoomMessageStream),
+  message: mist.WebsocketMessage(sm.RoomMessageStream),
   context: ctx.Context,
   roomid: String,
-) -> actor.Next(wt.RoomMessageStream, WsState) {
+) -> actor.Next(sm.RoomMessageStream, WsState) {
   case message {
     mist.Closed | mist.Shutdown -> actor.Stop(process.Normal)
     mist.Text(msg_text) -> {
@@ -82,15 +82,7 @@ fn ws_handler(
 
     mist.Custom(room_msg) -> {
       case room_msg {
-        wt.SUBSCRIBEWS(_) -> {
-          wisp.log_alert("FORBIDDEN OPERATION")
-          actor.continue(state)
-        }
-        wt.UNSUBSCRIBEWS -> {
-          wisp.log_alert("FORBIDDEN OPERATION")
-          actor.continue(state)
-        }
-        wt.INCOMING(_, msg) -> {
+        sm.Incoming(_, msg) -> {
           let msg = msg.message_content
           case mist.send_text_frame(connection, "INCOMING MESSAGE: " <> msg) {
             Ok(_) -> actor.continue(state)
@@ -99,6 +91,10 @@ fn ws_handler(
               actor.continue(state)
             }
           }
+        }
+        _ -> {
+          wisp.log_alert("FORBIDDEN OPERATION")
+          actor.continue(state)
         }
       }
     }
@@ -111,7 +107,7 @@ fn on_init(
   userid: String,
   roomid: String,
   context: ctx.Context,
-) -> #(WsState, Option(process.Selector(wt.RoomMessageStream))) {
+) -> #(WsState, Option(process.Selector(sm.RoomMessageStream))) {
   // TODO -> validate this userid
   let _ = mist.send_text_frame(connection, "WELCOME TO ROOM " <> roomid)
   let ws_inbox = process.new_subject()

@@ -12,8 +12,9 @@ import models/rooms/types/rooms
 import models/users/types/users
 import pog
 import server/sql
-import server/workers/toolkit/worker_functions as wf
-import server/workers/toolkit/worker_types as wt
+import server/workers/wkr_rooms/worker_rooms
+import server/workers/wkr_users/worker_users
+import server/workers/shared/shared_types as sm
 import utils/msg_types as mt
 
 // Public Types / APIs
@@ -80,8 +81,9 @@ pub fn room_sup_handler(
       |> actor.send(state.context, _)
       actor.continue(state)
     }
+
     t.NEWROOM(userid, capacity, name, roomid) ->
-      case wf.create_room_process(userid, capacity, name, state.context, conn) {
+      case worker_rooms.create_room_process(userid, capacity, name, state.context, conn) {
         Error(_) -> actor.continue(state)
         Ok(#(roomproc, _)) -> {
           echo "==========ROOMMSG=========="
@@ -92,6 +94,7 @@ pub fn room_sup_handler(
           actor.continue(state)
         }
       }
+
     t.ADDTOBROADCAST(userid, roomid, ws_inbox) -> {
       echo "******************************"
       echo "*                            *"
@@ -116,17 +119,14 @@ pub fn room_sup_handler(
           echo data
           t.BCT(roomid, userid.id, data.0, data.1)
           |> actor.send(state.context, _)
-          wt.SUBSCRIBEWS(mailbox: ws_inbox)
+          sm.SubscribeWS(mailbox: ws_inbox)
           |> actor.send(data.1, _)
           actor.continue(state)
         }
       }
-
-      // process.receive()
-      // t.BCT(roomid, userid.id, client, client_mailbox)
-      // |> actor.send(state.context, _)
       actor.continue(state)
     }
+
     t.REMOVEFROMBROADCAST(userid, roomid) -> {
       let temp_s = process.new_subject()
       t.GETUSERSESSION(userid, temp_s)
@@ -185,7 +185,7 @@ fn ctx_handler(
       case dict.get(state.registry, userid) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
-          let task = task.async(fn() { actor.send(subj.0, wt.CLOSESESSION) })
+          let task = task.async(fn() { actor.send(subj.0, sm.ShutdownUserSession) })
           case task.try_await(task, 1000) {
             Error(_) -> actor.continue(state)
             Ok(_) -> {
@@ -214,7 +214,7 @@ fn ctx_handler(
               msg.QUEUED,
             )
           echo "VALIDATEDMESSAGE::::   " <> new_msessage.message_content
-          wt.SENDTOROOM(rooms.RoomId(roomid), new_msessage)
+          sm.SendToRoom(rooms.RoomId(roomid), new_msessage)
           |> actor.send(usersession.0, _)
           actor.continue(state)
         }
@@ -252,7 +252,7 @@ fn sup_handler(
 ) -> actor.Next(t.SupMsg, t.SupState) {
   case msg {
     t.ADD(user) ->
-      case wf.create_user_process(user, state.roomsupbox, state.ctx, conn) {
+      case worker_users.create_user_process(user, state.roomsupbox, state.ctx, conn) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
           t.AddToCtx(user.user_id.id, subj)
@@ -321,7 +321,7 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
         Error(_) -> actor.continue(state)
         Ok(roomsubj) -> {
           let task =
-            fn() { actor.send(roomsubj, wt.SHUTDOWN) }
+            fn() { actor.send(roomsubj, sm.ShutdownRoom) }
             |> task.async()
           case task.try_await(task, 10_000) {
             Error(_) -> actor.continue(state)
@@ -338,7 +338,7 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
       case dict.get(state.registry, roomid) {
         Error(_) -> actor.continue(state)
         Ok(roomsubj) -> {
-          wt.CONNECT(
+          sm.ConnectUser(
             userid: users.UserId(userid),
             process_id: process.subject_owner(user_mailbox),
             user_session_process: user_client,
@@ -357,7 +357,7 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
         Error(_) -> actor.continue(state)
         Ok(roomsubj) -> {
           let userpid = process.subject_owner(user_client)
-          wt.DISCONNECT(users.UserId(userid), userpid, user_client, ws_inbox)
+          sm.DisconnectUser(users.UserId(userid), userpid, user_client, ws_inbox)
           |> actor.send(roomsubj, _)
           actor.continue(state)
         }
