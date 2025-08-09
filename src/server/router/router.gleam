@@ -1,6 +1,6 @@
 import gleam/http
 import global/ctx/ctx
-import server/middleware/lentilite.{middleware}
+import server/middleware/middleware.{middleware}
 import server/routes/routes_auth
 import server/routes/routes_chat
 import server/routes/routes_create_room
