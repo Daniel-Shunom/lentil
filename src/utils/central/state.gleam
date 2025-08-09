@@ -24,9 +24,7 @@ pub type ClientState {
     user_message_count: Int,
     user_error_count: Int,
     user_resource_consumption_count: Int,
-    user_session_subject: option.Option(
-      process.Subject(sm.UserSessionMessage),
-    ),
+    user_session_subject: option.Option(process.Subject(sm.UserSessionMessage)),
   )
 }
 

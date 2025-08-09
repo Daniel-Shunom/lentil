@@ -1,0 +1,6 @@
+pub const host = "http://localhost:8000"
+pub const endpoint_signup = "/user/signup"
+pub const endpoint_signin = "/auth/signin"
+pub const endpoint_newroom = "/rooms/newroom"
+pub const endpoint_joinroom = "/rooms/joinsession"
+pub const endpoint_chatroom = "/rooms/joinsession"
