@@ -22,9 +22,7 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
         None -> wisp.response(400)
         Some(valid_user) -> {
           let _day = 60 * 60 * 24
-          let userid = #("userid", json.string(valid_user.user_id.id))
-          let userauth = #("authenticated", json.bool(valid_user.user_auth))
-          let message =
+          let userid = #("userid", json.string(valid_user.user_id.id)) let userauth = #("authenticated", json.bool(valid_user.user_auth)) let message =
             mt.ClientRouterMessage(mt.CLIENTAuthEvent(
               userid: valid_user.user_id.id,
               event_type: mt.SIGNIN,
