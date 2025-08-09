@@ -1,9 +1,9 @@
+import gleam/dict
+import gleam/erlang/process
+import gleam/set
+import models/messages/types/msg
 import models/rooms/types/rooms
 import models/users/types/users
-import models/messages/types/msg
-import gleam/set
-import gleam/erlang/process
-import gleam/dict
 
 /// A room session is an on-server representation of an ideal
 /// long running room process and its state.
@@ -57,7 +57,6 @@ pub type RoomMessageStream {
   // Incoming essage from adapter to WebSocket subject.
   Incoming(roomid: String, message: msg.Message)
 }
-
 
 /// A room is a long running process with its own suejct. Thie type describes
 /// the kind of message a Room process can receive on the server.
@@ -113,7 +112,6 @@ pub type RoomSessionMessage {
   // This will be intiated by the server for probably maintenance purposes.
   ShutdownRoom
 }
-
 
 pub type UserSessionMessage {
   /// Register that we've got a live room process we can talk to

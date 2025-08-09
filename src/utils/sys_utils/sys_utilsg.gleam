@@ -57,7 +57,7 @@ fn handler(
 fn poll(subj) {
   process.send_after(
     subj,
-    30000,
+    30_000,
     fn() {
       let #(total, used) = getmem()
       let load = getload()

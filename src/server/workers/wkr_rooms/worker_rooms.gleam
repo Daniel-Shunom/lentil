@@ -1,20 +1,20 @@
-import prng/seed
-import prng/random
-import server/workers/shared/shared_types as sm
-import models/rooms/methods/methods
-import models/rooms/types/rooms
-import server/workers/toolkit/constants as m
-import gleam/int
-import models/messages/types/msg
-import gleam/otp/actor
-import gleam/list
-import gleam/set
 import gleam/erlang/process
 import gleam/function
+import gleam/int
+import gleam/list
+import gleam/otp/actor
+import gleam/otp/supervisor
+import gleam/set
 import global/ctx/types as t
+import models/messages/types/msg
+import models/rooms/methods/methods
+import models/rooms/types/rooms
 import models/users/types/users
 import pog
-import gleam/otp/supervisor
+import prng/random
+import prng/seed
+import server/workers/shared/shared_types as sm
+import server/workers/toolkit/constants as m
 
 pub fn create_room_process(
   owner: users.UserId,
@@ -47,7 +47,7 @@ fn new_room_sup(
       |> process.selecting(worker_subj, function.identity)
       |> actor.Ready(session, _)
     },
-    1000, 
+    1000,
     room_session_handler,
   ))
 }
@@ -99,7 +99,7 @@ fn create_room_process_helper_supervisor(
 
 fn room_session_handler(
   session_message: sm.RoomSessionMessage,
-  session_state:   sm.RoomSession
+  session_state: sm.RoomSession,
 ) -> actor.Next(sm.RoomSessionMessage, sm.RoomSession) {
   case session_message {
     sm.DeleteRoom(user, client) -> {
@@ -119,7 +119,7 @@ fn room_session_handler(
       }
     }
 
-    sm.SendMessageFromRoom(_user, _subj) ->  actor.continue(session_state)
+    sm.SendMessageFromRoom(_user, _subj) -> actor.continue(session_state)
     sm.ReceiveMessageFromUser(message, _) -> {
       let new_message =
         msg.Message(..sanitize_message(message), message_code: msg.DELIVERED)
@@ -329,17 +329,15 @@ fn room_session_handler(
         }
       }
     }
-    sm.ShutdownRoom-> {
+    sm.ShutdownRoom -> {
       let msg = "Abnormal Activity"
       actor.Stop(process.Abnormal(msg))
     }
   }
 }
 
-
 @external(erlang, "sanitizer", "sanitize_text")
 fn clean(msg: String) -> String
-
 
 fn sanitize_message(msg: msg.Message) -> msg.Message {
   let nc = clean(msg.message_content)
@@ -361,6 +359,6 @@ fn generate_session_id() -> String {
     |> random.random_sample()
     |> seed.new()
     |> random.sample(str, _)
-  
+
   "lntl-rm-" <> secure_prefix <> secure_id
 }

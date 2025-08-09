@@ -12,9 +12,9 @@ import models/rooms/types/rooms
 import models/users/types/users
 import pog
 import server/sql
+import server/workers/shared/shared_types as sm
 import server/workers/wkr_rooms/worker_rooms
 import server/workers/wkr_users/worker_users
-import server/workers/shared/shared_types as sm
 import utils/msg_types as mt
 
 // Public Types / APIs
@@ -83,7 +83,15 @@ pub fn room_sup_handler(
     }
 
     t.NEWROOM(userid, capacity, name, roomid) ->
-      case worker_rooms.create_room_process(userid, capacity, name, state.context, conn) {
+      case
+        worker_rooms.create_room_process(
+          userid,
+          capacity,
+          name,
+          state.context,
+          conn,
+        )
+      {
         Error(_) -> actor.continue(state)
         Ok(#(roomproc, _)) -> {
           echo "==========ROOMMSG=========="
@@ -185,7 +193,8 @@ fn ctx_handler(
       case dict.get(state.registry, userid) {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
-          let task = task.async(fn() { actor.send(subj.0, sm.ShutdownUserSession) })
+          let task =
+            task.async(fn() { actor.send(subj.0, sm.ShutdownUserSession) })
           case task.try_await(task, 1000) {
             Error(_) -> actor.continue(state)
             Ok(_) -> {
@@ -252,7 +261,14 @@ fn sup_handler(
 ) -> actor.Next(t.SupMsg, t.SupState) {
   case msg {
     t.ADD(user) ->
-      case worker_users.create_user_process(user, state.roomsupbox, state.ctx, conn) {
+      case
+        worker_users.create_user_process(
+          user,
+          state.roomsupbox,
+          state.ctx,
+          conn,
+        )
+      {
         Error(_) -> actor.continue(state)
         Ok(subj) -> {
           t.AddToCtx(user.user_id.id, subj)
@@ -357,7 +373,12 @@ fn rmhandler(msg: t.RmMsg, state: t.RmState) -> actor.Next(t.RmMsg, t.RmState) {
         Error(_) -> actor.continue(state)
         Ok(roomsubj) -> {
           let userpid = process.subject_owner(user_client)
-          sm.DisconnectUser(users.UserId(userid), userpid, user_client, ws_inbox)
+          sm.DisconnectUser(
+            users.UserId(userid),
+            userpid,
+            user_client,
+            ws_inbox,
+          )
           |> actor.send(roomsubj, _)
           actor.continue(state)
         }

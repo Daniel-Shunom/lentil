@@ -1,22 +1,21 @@
-
-import gleam/int
-import prng/seed
-import prng/random
-import server/workers/shared/shared_types as sm
-import gleam/otp/actor
-import gleam/erlang/process
-import models/messages/types/msg
 import gleam/dict
-import global/ctx/types as t
+import gleam/erlang/process
+import gleam/function
+import gleam/int
+import gleam/list
 import gleam/option.{type Option}
+import gleam/otp/actor
+import gleam/otp/supervisor
+import global/ctx/types as t
+import models/messages/methods/methods as mt
+import models/messages/types/msg
+import models/rooms/types/rooms
 import models/users/types/users
 import pog
-import models/messages/methods/methods as mt
-import gleam/otp/supervisor
-import gleam/list
-import gleam/function
+import prng/random
+import prng/seed
 import server/sql
-import models/rooms/types/rooms
+import server/workers/shared/shared_types as sm
 
 pub fn create_user_process(
   user: users.User,
@@ -231,6 +230,6 @@ fn generate_session_id() -> String {
     |> random.random_sample()
     |> seed.new()
     |> random.sample(str, _)
-  
+
   "lntl-user-" <> secure_prefix <> secure_id
 }
