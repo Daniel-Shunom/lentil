@@ -3,7 +3,7 @@ import gleam/erlang/process
 import gleam/option
 import global/gtypes
 import models/users/types/users
-import server/workers/toolkit/worker_types as wt
+import server/workers/shared/shared_types as sm
 
 pub type ClientState {
   // I am thinking of implementing a notification system,
@@ -25,7 +25,7 @@ pub type ClientState {
     user_error_count: Int,
     user_resource_consumption_count: Int,
     user_session_subject: option.Option(
-      process.Subject(wt.SessionOperationMessage),
+      process.Subject(sm.UserSessionMessage),
     ),
   )
 }
@@ -69,7 +69,7 @@ pub type CentralStateAction {
   UPDATEUserResourceConsumption(userid: users.UserId, amount: Int)
   UPDATEUserSessionSubject(
     userid: users.UserId,
-    subject: option.Option(process.Subject(wt.SessionOperationMessage)),
+    subject: option.Option(process.Subject(sm.UserSessionMessage)),
   )
 }
 
