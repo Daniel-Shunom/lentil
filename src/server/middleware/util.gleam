@@ -7,7 +7,7 @@ import server/pages/a_def.{
 import simplifile
 import wisp.{type Response}
 
-pub type ERRORS {
+type ERRORS {
   SERVERERROR
   BADREQUEST
   NOTFOUND
@@ -23,7 +23,7 @@ fn get_path(error: ERRORS) -> String {
   }
 }
 
-pub fn build_res(error: ERRORS, response: wisp.Response) -> wisp.Response {
+fn build_res(error: ERRORS, response: wisp.Response) -> wisp.Response {
   let default = default_page
   get_path(error)
   |> simplifile.read()

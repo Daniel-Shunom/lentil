@@ -1,5 +1,5 @@
 import global/ctx/ctx.{type Context}
-import server/middleware/helpers.{define_request}
+import server/middleware/util.{define_request}
 import wisp.{type Request, type Response}
 
 pub fn middleware(
