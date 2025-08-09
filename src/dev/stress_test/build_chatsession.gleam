@@ -1,3 +1,4 @@
+import gleam/otp/actor
 import gleam/option
 import dev/stress_test/build_session as bd
 import gleam/http/request
@@ -20,7 +21,14 @@ pub fn build_chatsession(user: bd.DevSession) {
 }
 
 fn wsinit() { #(Nil, option.None) }
-fn wsloop(state, message, conn) {
-  todo
+fn wsloop(message: stratus.Message(Nil), state, conn) {
+  case message {
+    stratus.Text(msg) -> {
+      let _ = stratus.send_text_message(conn, "message")
+      io.println("Incoming: " <> msg)
+      actor.continue(state)
+    }
+    _ -> actor.continue(state)
+  }
 }
 fn wsonclose(_) { io.println("done") }
