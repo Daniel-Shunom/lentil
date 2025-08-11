@@ -26,7 +26,7 @@ pub fn authconfig_set_channel(
 
 pub fn authconfig_set_handler(
   config: AuthConfig(a, b),
-  handler: Option(fn(Subject(b)) -> Nil)
+  handler: Option(fn(b, Subject(b)) -> Nil)
 ) -> AuthConfig(a, b) {
   AuthConfig(..config, handler: handler)
 }

@@ -26,7 +26,7 @@ pub fn cacheconfig_set_channel(
 
 pub fn cacheconfig_set_handler(
   config: CacheConfig(a, b),
-  handler: Option(fn(Subject(b)) -> Nil)
+  handler: Option(fn(b, Subject(b)) -> Nil)
 ) -> CacheConfig(a, b) {
   CacheConfig(..config, handler: handler)
 }
