@@ -31,7 +31,7 @@ pub type AuthConfig(auth_provider, msg_type) {
   AuthConfig(
     provider: fn() -> Nil,
     channel: Option(Subject(msg_type)),
-    handler: Option(fn(msg_type, Subject(msg_type)) -> Nil)
+    handler: Option(fn(msg_type, Subject(msg_type)) -> Nil),
   )
 }
 
@@ -39,6 +39,6 @@ pub type BucketConfig(bucket_provider, msg_type) {
   BucketConfig(
     provider: fn() -> Nil,
     channel: Option(Subject(msg_type)),
-    handler: Option(fn(msg_type, Subject(msg_type)) -> Nil)
+    handler: Option(fn(msg_type, Subject(msg_type)) -> Nil),
   )
 }

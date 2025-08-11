@@ -1,10 +1,10 @@
-import gleam/httpc
-import gleam/http
-import gleam/http/request
-import gleam/json
-import gleam/list
 import dev/stress_test/dev_consts as dc
 import gleam/dynamic/decode
+import gleam/http
+import gleam/http/request
+import gleam/httpc
+import gleam/json
+import gleam/list
 
 pub fn build_room(user_id: String) {
   let roomname = #("roomname", json.string("room"))
@@ -33,8 +33,6 @@ pub fn dev_roomdecoder() {
   decode.success(DevRoom(roomid, roomname))
 }
 
-pub type DevRoom{
+pub type DevRoom {
   DevRoom(id: String, name: String)
 }
-
-

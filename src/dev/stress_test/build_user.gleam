@@ -1,10 +1,10 @@
+import dev/stress_test/dev_consts as dc
 import gleam/dynamic/decode
-import gleam/httpc
 import gleam/http
 import gleam/http/request
+import gleam/httpc
 import gleam/json
 import gleam/list
-import dev/stress_test/dev_consts as dc
 
 pub fn build_user(first: String, last: String) {
   let fname = #("firstname", json.string(first))

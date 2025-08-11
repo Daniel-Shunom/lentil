@@ -1,13 +1,9 @@
+import configs/configs.{type AuthConfig, AuthConfig}
 import gleam/erlang/process.{type Subject}
 import gleam/option.{type Option, None}
-import configs/configs.{type AuthConfig,AuthConfig}
 
 pub fn authconfig_new() -> AuthConfig(a, b) {
-  AuthConfig(
-    provider: fn() { Nil },
-    channel: None,
-    handler: None,
-  )
+  AuthConfig(provider: fn() { Nil }, channel: None, handler: None)
 }
 
 pub fn authconfig_set_provider(
@@ -26,7 +22,7 @@ pub fn authconfig_set_channel(
 
 pub fn authconfig_set_handler(
   config: AuthConfig(a, b),
-  handler: Option(fn(b, Subject(b)) -> Nil)
+  handler: Option(fn(b, Subject(b)) -> Nil),
 ) -> AuthConfig(a, b) {
   AuthConfig(..config, handler: handler)
 }
