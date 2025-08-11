@@ -14,4 +14,19 @@ and on boot-ups unless disabled.
 Configurations can always be readily enabled or disabled at the start of the 
 boot-up.
 
+## current suppported configurations
+
+### database
+- PostgreSQL
+
+### authentication
+- User Defined
+
+### caching
+- User Defined
+
+### logging
+- User Defined
+
+> _more coming soon!_
 > Thank you using lentil!
