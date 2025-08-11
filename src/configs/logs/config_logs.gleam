@@ -26,7 +26,7 @@ pub fn logconfig_set_channel(
 
 pub fn logconfig_set_handler(
   config: LogConfig(a, b),
-  handler: Option(fn(Subject(b)) -> Nil)
+  handler: Option(fn(b, Subject(b)) -> Nil)
 ) -> LogConfig(a, b) {
   LogConfig(..config, handler: handler)
 }
