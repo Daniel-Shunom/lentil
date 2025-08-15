@@ -5,6 +5,7 @@ import gleam/function
 import gleam/http/response
 import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
+import gleam/result
 import global/ctx/ctx
 import global/ctx/types as t
 import global/functions as gf
@@ -17,6 +18,7 @@ import utils/msg_types as mt
 import wisp
 
 pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) {
+  // TODO -> use cached values where necessary.
   case sql.fetch_is_valid_message(ctx.db_connection, roomid, userid) {
     Error(_) -> {
       let btree =

@@ -1,7 +1,7 @@
 import gleam/bool
 import gleam/result
 import gleam/string_tree
-import server/pages/a_def.{
+import server/pages/pagepaths.{
   bad_request, default_page, not_found, server_error, too_large,
 }
 import simplifile
