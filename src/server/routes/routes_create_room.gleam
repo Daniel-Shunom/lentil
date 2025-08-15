@@ -1,11 +1,13 @@
+import server/cache/cache_room
+import gleam/bool
 import gleam/dynamic/decode
 import gleam/json
 import gleam/list
-import gleam/otp/actor
+import gleam/result
 import gleam/string
 import global/ctx/ctx
-import global/ctx/types as t
 import global/functions.{id_generator}
+import models/rooms/methods/methods.{create_room}
 import models/rooms/types/rooms.{type RoomCapacity}
 import models/users/types/users.{UserId}
 import pog
@@ -15,10 +17,14 @@ import wisp
 pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
-  case decode.run(json, room_decoder()) {
-    Error(_) -> wisp.response(400)
-    Ok(RoomReqs(roomid, ownerid, roomname, capacity, status)) -> {
-      case
+  let bar =
+    {
+      use RoomReqs(roomid, ownerid, roomname, capacity, status) <- result.try(
+        decode.run(json, room_decoder())
+        |> result.replace_error(wisp.response(400)),
+      )
+
+      use pog.Returned(_, rows) <- result.try(
         sql.create_new_room(
           ctx.db_connection,
           roomid,
@@ -27,28 +33,35 @@ pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
           get_cap(capacity),
           status,
         )
-      {
-        Error(_) -> wisp.response(400)
-        Ok(pog.Returned(_, rows)) -> {
-          case rows {
-            [] -> wisp.response(400)
-            _ -> {
-              t.NEWROOM(UserId(ownerid), capacity, roomname, roomid)
-              |> actor.send(ctx.roomsupbox, _)
-              let roomid = #("roomid", json.string(roomid))
-              let roomname = #("roomname", json.string(roomname))
-              list.new()
-              |> list.prepend(roomid)
-              |> list.prepend(roomname)
-              |> json.object()
-              |> json.to_string_tree()
-              |> wisp.json_response(200)
-            }
-          }
-        }
-      }
+        |> result.replace_error(wisp.response(400)),
+      )
+
+      use <- bool.guard(list.is_empty(rows), Error(wisp.response(400)))
+
+      use room <- result.try(
+        create_room(
+          room_owner: UserId(ownerid),
+          room_name: roomname,
+          room_members: [],
+          room_capacity: capacity,
+          connection: ctx.db_connection,
+        )
+        |> result.replace_error(wisp.response(400)),
+      )
+
+      cache_room.cache_room(ctx.room_cache, room)
+      let roomid = #("roomid", json.string(roomid))
+      let roomname = #("roomname", json.string(roomname))
+
+      list.new()
+      |> list.prepend(roomid)
+      |> list.prepend(roomname)
+      |> json.object()
+      |> json.to_string_tree()
+      |> wisp.json_response(200)
+      |> Ok
     }
-  }
+  result.unwrap_both(bar)
 }
 
 fn room_decoder() -> decode.Decoder(RoomReqs) {
