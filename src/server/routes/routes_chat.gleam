@@ -1,3 +1,4 @@
+import gleam/result
 import gleam/bytes_tree
 import gleam/dynamic/decode
 import gleam/erlang/process
@@ -17,6 +18,7 @@ import utils/msg_types as mt
 import wisp
 
 pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) {
+  // TODO -> use cached values where necessary.
   case sql.fetch_is_valid_message(ctx.db_connection, roomid, userid) {
     Error(_) -> {
       let btree =
