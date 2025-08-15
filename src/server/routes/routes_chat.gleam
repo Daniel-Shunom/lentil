@@ -1,4 +1,3 @@
-import gleam/result
 import gleam/bytes_tree
 import gleam/dynamic/decode
 import gleam/erlang/process
@@ -6,6 +5,7 @@ import gleam/function
 import gleam/http/response
 import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
+import gleam/result
 import global/ctx/ctx
 import global/ctx/types as t
 import global/functions as gf

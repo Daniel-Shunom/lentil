@@ -1,3 +1,4 @@
+import server/cache/cache_room.{type RoomCacheMessage}
 import gleam/dict
 import gleam/erlang/process.{type Subject}
 import gleam/list
@@ -11,12 +12,12 @@ import models/messages/types/msg
 import models/rooms/types/rooms
 import models/users/types/users
 import pog
+import server/cache/cache_user.{type UserCacheMessage}
 import server/sql
 import server/workers/shared/shared_types as sm
 import server/workers/wkr_rooms/worker_rooms
 import server/workers/wkr_users/worker_users
 import utils/msg_types as mt
-import server/cache/cache_user.{type UserCacheMessage}
 
 // Public Types / APIs
 
@@ -27,7 +28,8 @@ pub type Context {
     usersupbox: Subject(t.SupMsg),
     roomsupbox: Subject(t.RmSupMsg),
     server_monitor: Subject(mt.GlobalMonitorMessage(msg.Message)),
-    user_cache: Subject(UserCacheMessage)
+    user_cache: Subject(UserCacheMessage),
+    room_cache: Subject(RoomCacheMessage),
   )
 }
 
@@ -42,6 +44,7 @@ pub fn get_context(
   let roomsup = room_supervisor(roombox, conn, supstate_box)
   let usersup = supstate_box
   let user_cache = cache_user.start_user_cache()
+  let room_cache = cache_room.start_room_cache()
   case get_rooms(connection) {
     None -> {
       echo "No rooms in DB"
@@ -52,6 +55,7 @@ pub fn get_context(
         roomsupbox: roomsup,
         server_monitor: monitor,
         user_cache: user_cache,
+        room_cache: room_cache,
       )
     }
     Some(listofinstructions) -> {
@@ -68,6 +72,7 @@ pub fn get_context(
         roomsupbox: roomsup,
         server_monitor: monitor,
         user_cache: user_cache,
+        room_cache: room_cache
       )
     }
   }

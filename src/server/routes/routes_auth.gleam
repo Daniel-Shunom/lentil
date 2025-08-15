@@ -1,4 +1,3 @@
-import server/cache/cache_user
 import gleam/dynamic/decode
 import gleam/json
 import gleam/list
@@ -9,6 +8,7 @@ import global/ctx/ctx
 import global/ctx/types as t
 import global/functions.{hasher}
 import models/users/types/users.{type User, User}
+import server/cache/cache_user
 import server/sql
 import utils/msg_types as mt
 import wisp
