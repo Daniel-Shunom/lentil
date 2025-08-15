@@ -5,3 +5,5 @@
 /build
 erl_crash.dump
 *.sql
+!/src/migrations/*.sql
+!/priv/*.sql
