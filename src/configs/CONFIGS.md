@@ -1,5 +1,7 @@
 # CONFIGS
 
+> _Configs will be implemented officially in the nearest future_
+
 Lentil supports intergration with third party services for things such
 as logging, database management, authentication, and caching. Support for 
 more kinds of services will come later.
