@@ -16,6 +16,7 @@ import server/workers/shared/shared_types as sm
 import server/workers/wkr_rooms/worker_rooms
 import server/workers/wkr_users/worker_users
 import utils/msg_types as mt
+import server/cache/cache_user.{type UserCacheMessage}
 
 // Public Types / APIs
 
@@ -26,6 +27,7 @@ pub type Context {
     usersupbox: Subject(t.SupMsg),
     roomsupbox: Subject(t.RmSupMsg),
     server_monitor: Subject(mt.GlobalMonitorMessage(msg.Message)),
+    user_cache: Subject(UserCacheMessage)
   )
 }
 
@@ -39,6 +41,7 @@ pub fn get_context(
   let roombox = roombox_subj
   let roomsup = room_supervisor(roombox, conn, supstate_box)
   let usersup = supstate_box
+  let user_cache = cache_user.start_user_cache()
   case get_rooms(connection) {
     None -> {
       echo "No rooms in DB"
@@ -48,6 +51,7 @@ pub fn get_context(
         usersupbox: usersup,
         roomsupbox: roomsup,
         server_monitor: monitor,
+        user_cache: user_cache,
       )
     }
     Some(listofinstructions) -> {
@@ -63,6 +67,7 @@ pub fn get_context(
         usersupbox: usersup,
         roomsupbox: roomsup,
         server_monitor: monitor,
+        user_cache: user_cache,
       )
     }
   }
