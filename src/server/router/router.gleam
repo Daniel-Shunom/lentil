@@ -1,3 +1,4 @@
+import server/routes/routes_edit_room
 import gleam/http
 import global/ctx/ctx
 import server/middleware/middleware.{middleware}
@@ -57,7 +58,7 @@ fn server_routing(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
 
     ["rooms", "deleteroom"] -> {
       use <- wisp.require_method(req, http.Delete)
-      routes_delete_room.handle_delete_room(req, ctx)
+      routes_edit_room.handle_edit_room(req, ctx)
     }
 
     ["rooms", "joinroom"] -> {
