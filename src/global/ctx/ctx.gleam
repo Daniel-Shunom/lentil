@@ -433,7 +433,6 @@ fn get_rooms(conn: pog.Connection) -> Option(List(t.RmSupMsg)) {
       Error(_) -> []
       Ok(pog.Returned(_, rows)) -> {
         use x <- list.map(rows)
-        echo x
         t.NEWROOM(users.UserId(x.id), cap(x.capacity), x.name, x.id)
       }
     }
