@@ -4,6 +4,9 @@ SETLOCAL
 
 echo Welcome to the lentil Installation Guide!
 
+:: Set installation directory to user's home directory
+set INSTALL_DIR=%USERPROFILE%\lentilapp
+
 :: 1. Check for Scoop. Install if missing
 where scoop >nul 2>nul
 IF ERRORLEVEL 1 (
@@ -32,10 +35,10 @@ IF ERRORLEVEL 1 (
 )
 
 :: 4. Clone app repo if not present and build
-IF NOT EXIST lentilapp (
-    git clone https://github.com/Daniel-Shunom/lentil.git lentilapp
+IF NOT EXIST "%INSTALL_DIR%" (
+    git clone https://github.com/Daniel-Shunom/lentil.git "%INSTALL_DIR%"
 )
-cd lentilapp
+cd "%INSTALL_DIR%"
 
 :: Build the application
 gleam build
@@ -65,7 +68,7 @@ setx DATABASE_URL "postgres://user:password@localhost:5432/my_db" >nul
 :: 7. Optional: Automate database schema setup
 set DB_USER=user   :: replace with your database user
 set DB_NAME=my_db  :: replace with your database name
-set SCHEMA_FILE=..\path\to\schema.sql  :: update with relative path to your SQL file
+set SCHEMA_FILE=%USERPROFILE%\path\to\schema.sql  :: update with path relative to home directory
 
 REM Check if PGPASSWORD environment variable is set or prompt user
 IF "%PGPASSWORD%"=="" (
@@ -81,29 +84,5 @@ REM Load schema if file exists
 IF EXIST "%SCHEMA_FILE%" (
     psql -U %DB_USER% -d %DB_NAME% -f "%SCHEMA_FILE%" -w
 ) ELSE (
-    echo Schema file %SCHEMA_FILE% not found. Please provide the schema file.
-)
-
-:: 8. Show instructions for using env var in Gleam
-echo.
-echo ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-echo In your Gleam code, use envoy:
-echo.
-echo import envoy
-echo.
-echo pub fn main() {
-echo.    let db_url = envoy.get("DATABASE_URL")
-echo.    // use db_url in your app
-echo }
-echo.
-echo ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-echo To start your Gleam app:
-echo     gleam run
-echo.
-echo If you installed PostgreSQL, you may need to start its service:
-echo     pg_ctl -D %%USERPROFILE%%\scoop\persist\postgresql\data start
-echo.
-
-PAUSE
-ENDLOCAL
+    echo Schema file %SCHEMA_FILE% not found. Please provide the schema
 

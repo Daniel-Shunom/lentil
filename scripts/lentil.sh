@@ -4,6 +4,9 @@ set -e
 
 echo "Welcome to the lentil Installation Guide!"
 
+# 0. Set installation directory inside user's home directory
+INSTALL_DIR="$HOME/lentilapp"
+
 # 1. Check OS and install Gleam and Erlang
 if ! command -v gleam &> /dev/null; then
   echo "Gleam not found. Installing Gleam..."
@@ -34,11 +37,11 @@ else
   echo "Erlang found."
 fi
 
-# 2. Set up Gleam project dependencies and build
-if [ ! -d lentilapp ]; then
-  git clone https://github.com/Daniel-Shunom/lentil lentilapp
+# 2. Clone app repo if not present and build
+if [ ! -d "$INSTALL_DIR" ]; then
+  git clone https://github.com/Daniel-Shunom/lentil.git "$INSTALL_DIR"
 fi
-cd lentilapp
+cd "$INSTALL_DIR"
 
 # Build the application
 gleam build
@@ -46,7 +49,7 @@ gleam build
 # 3. Check and install PostgreSQL
 if ! command -v psql &> /dev/null; then
   echo "PostgreSQL not found."
-  read -p "Do you want to install PostgreSQL? (y/n): " pg_install
+  read -rp "Do you want to install PostgreSQL? (y/n): " pg_install
   if [[ "$pg_install" == "y" ]]; then
     if command -v apt-get &> /dev/null; then
       sudo apt-get install -y postgresql
@@ -67,20 +70,21 @@ fi
 
 # 4. Apply schema from priv/schema.sql
 DB_NAME="your_database_name_here"   # <<< Replace with your database name or make this dynamic
+
 echo "Applying baseline schema from priv/schema.sql to database '$DB_NAME'..."
 psql -d "$DB_NAME" -f priv/schema.sql
 echo "Schema setup complete."
 
 # 5. Set environment variable (e.g., DATABASE_URL)
 export DATABASE_URL="postgres://user:password@localhost:5432/$DB_NAME"
-echo 'export DATABASE_URL="postgres://user:password@localhost:5432/'"$DB_NAME"'"' >> ~/.bashrc
+if ! grep -qxF "export DATABASE_URL=\"postgres://user:password@localhost:5432/$DB_NAME\"" ~/.bashrc; then
+  echo "export DATABASE_URL=\"postgres://user:password@localhost:5432/$DB_NAME\"" >> ~/.bashrc
+fi
 
 # 6. Show how to use env variable in Gleam app (envoy dependency)
 cat <<EOL
 In your Gleam code, use the 'envoy' package to read environment variables, e.g.:
-
 import envoy
-
 pub fn main() {
   let db_url = envoy.get("DATABASE_URL")
   // use db_url in your app
@@ -91,3 +95,4 @@ EOL
 echo "To start your Gleam application:"
 echo "cd lentilapp"
 echo "gleam run"
+
