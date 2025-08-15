@@ -1,3 +1,4 @@
+import server/cache/cache_user
 import gleam/dynamic/decode
 import gleam/json
 import gleam/list
@@ -32,6 +33,7 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
               lntl_time: functions.get_timestamp(),
             ))
 
+          cache_user.cache_user(ctx.user_cache, valid_user)
           actor.send(ctx.server_monitor, message)
           t.ADD(valid_user)
           |> actor.send(ctx.usersupbox, _)
@@ -56,10 +58,11 @@ pub fn handle_auth_signout(req: wisp.Request, ctx: ctx.Context) -> wisp.Response
       let message =
         mt.ClientRouterMessage(mt.CLIENTAuthEvent(
           userid: userid,
-          event_type: mt.SIGNIN,
+          event_type: mt.SIGNOUT,
           success: True,
           lntl_time: functions.get_timestamp(),
         ))
+      cache_user.uncache_user(ctx.user_cache, userid)
       actor.send(ctx.server_monitor, message)
       t.REM(userid)
       |> actor.send(ctx.usersupbox, _)
