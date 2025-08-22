@@ -181,7 +181,7 @@ pub fn global_router_handler(
           |> actor.send(central_router_state.central_state, _)
           actor.continue(central_router_state)
         }
-        mt.CLIENTLatencyReport(userid, ping_ms, time) -> {
+        mt.CLIENTLatencyReport(_userid, _ping_ms, _time) -> {
           let _ = {
             use subj <- option.then(central_router_state.stream_channel)
             let msg = "CLIENTSIDE EVENT: " <> string.inspect(client_message)

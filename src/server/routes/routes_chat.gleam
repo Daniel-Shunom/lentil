@@ -1,11 +1,13 @@
 import gleam/bytes_tree
+import gleam/bool
+import gleam/result
+import gleam/list
 import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/function
 import gleam/http/response
 import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
-import gleam/result
 import global/ctx/ctx
 import global/ctx/types as t
 import global/functions as gf
@@ -17,54 +19,37 @@ import server/workers/shared/shared_types as sm
 import utils/msg_types as mt
 import wisp
 
-pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) {
-  // TODO -> use cached values where necessary.
-  case sql.fetch_is_valid_message(ctx.db_connection, roomid, userid) {
-    Error(_) -> {
-      let btree =
-        "Connection not allowed"
-        |> bytes_tree.from_string()
-      response.new(400)
-      |> response.set_body(mist.Bytes(btree))
-    }
-    Ok(pog.Returned(_, value)) -> {
-      case value {
-        [] -> {
-          let btree =
-            "Connection not allowed"
-            |> bytes_tree.from_string()
-
-          response.new(400)
-          |> response.set_body(mist.Bytes(btree))
-        }
-        [val, ..] -> {
-          case val.in_room {
-            False -> {
-              let btree =
-                "Connection not allowed"
-                |> bytes_tree.from_string()
-
-              response.new(400)
-              |> response.set_body(mist.Bytes(btree))
-            }
-            True -> {
-              let handler = fn(state, conn, msg) {
-                ws_handler(state, conn, msg, ctx, roomid)
-              }
-
-              // Send a message to add user proc to broadcast
-              mist.websocket(
-                req,
-                handler,
-                on_init(_, userid, roomid, ctx),
-                on_close(_, roomid, ctx),
-              )
-            }
-          }
-        }
-      }
-    }
+pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) {{
+  let err = 
+    response.new(400)
+    |> response.set_body(
+      "connection not allowed"
+      |> bytes_tree.from_string()
+      |> mist.Bytes()
+    )
+  use pog.Returned(_, value)<- result.try(
+    sql.fetch_is_valid_message(
+      ctx.db_connection,
+      roomid, 
+      userid
+    )
+    |> result.replace_error(err)
+  )
+  use extracted <- result.try(
+    list.first(value)
+    |> result.replace_error(err)
+  )
+  use <- bool.guard(!extracted.in_room, Error(err))
+  let handler = fn(state, conn, msg) {
+    ws_handler(state, conn, msg, ctx, roomid)
   }
+  mist.websocket(
+    req, 
+    handler,
+    on_init(_, userid, roomid, ctx),
+    on_close(_, roomid, ctx) 
+  ) |> Ok }
+  |> result.unwrap_both()
 }
 
 fn ws_handler(
@@ -134,12 +119,11 @@ fn on_init(
       wisp.log_alert("CANNOT RETRIEVE INBOX STREAM")
       #(WsState(users.UserId(userid)), None)
     }
-    Ok(package) -> {
+    Ok(_package) -> {
       let reciever =
         process.new_selector()
         |> process.selecting(ws_inbox, function.identity)
       wisp.log_notice("SUCCESSFULLY RETREIVED USER PACKAGE")
-      echo package
       #(WsState(users.UserId(userid)), Some(reciever))
     }
   }
