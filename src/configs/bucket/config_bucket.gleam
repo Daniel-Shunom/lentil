@@ -3,7 +3,11 @@ import gleam/erlang/process.{type Subject}
 import gleam/option.{type Option, None}
 
 pub fn configbucket_new() -> BucketConfig(a, b) {
-  BucketConfig(provider: fn() { Nil }, channel: None, handler: None)
+  BucketConfig(
+    provider: fn() { Nil }, 
+    channel: None, 
+    handler: None
+  )
 }
 
 pub fn configbucket_set_provider(

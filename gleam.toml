@@ -30,6 +30,8 @@ mist = ">= 4.0.7 and < 5.0.0"
 gleam_yielder = ">= 1.1.0 and < 2.0.0"
 gleam_httpc = ">= 5.0.0 and < 6.0.0"
 stratus = ">= 0.9.7 and < 1.0.0"
+gwt = ">= 2.1.2 and < 3.0.0"
+birl = ">= 1.8.0 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
