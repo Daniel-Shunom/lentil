@@ -20,82 +20,88 @@ import wisp
 pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
-  case decode.run(json, credentials_decoder()) {
-    Error(_) -> wisp.response(400)
-    Ok(Credentials(uname, pswd)) -> {
-      case is_user(uname, pswd, ctx) {
-        None -> wisp.response(400)
-        Some(valid_user) -> {
-          let _day = 60 * 60 * 24
-          let userid = #("userid", json.string(valid_user.user_id.id))
-          let userauth = #("authenticated", json.bool(valid_user.user_auth))
-          let jwtoken = #(
-            "token",
-            {
-              let webtoken =
-                jwt.set_jwt_browser(valid_user.user_id.id)
-                |> jwt.get_jwt_browser()
-              use header <- result.try(
-                request.get_header(req, "user-agent")
-                |> result.replace_error(json.string(webtoken)),
-              )
-              use <- bool.guard(
-                !string.contains(header, "mobile"),
-                Ok(json.string(webtoken)),
-              )
-              jwt.set_jwt_mobile(valid_user.user_id.id)
-              |> jwt.get_jwt_mobile()
-              |> json.string()
-              |> Ok
-            }
-              |> result.unwrap_both(),
-          )
-          let message =
-            mt.ClientRouterMessage(mt.CLIENTAuthEvent(
-              userid: valid_user.user_id.id,
-              event_type: mt.SIGNIN,
-              success: True,
-              lntl_time: functions.get_timestamp(),
-            ))
-
-          cache_user.cache_user(ctx.user_cache, valid_user)
-          actor.send(ctx.server_monitor, message)
-          t.ADD(valid_user)
-          |> actor.send(ctx.usersupbox, _)
-          list.new()
-          |> list.prepend(jwtoken)
-          |> list.prepend(userauth)
-          |> list.prepend(userid)
-          |> json.object()
-          |> json.to_string_tree()
-          |> wisp.json_response(200)
-        }
+  let err = wisp.response(400)
+  {
+    use Credentials(uname, paswd) <- result.try(
+      decode.run(json, credentials_decoder())
+      |> result.replace_error(err),
+    )
+    use user <- result.try(
+      is_user(uname, paswd, ctx)
+      |> option.to_result(err),
+    )
+    let userid = #("userid", json.string(user.user_id.id))
+    let auth = #("authenticated", json.bool(user.user_auth))
+    let token = #(
+      "token",
+      {
+        let webtoken =
+          jwt.set_jwt_browser(user.user_id.id)
+          |> jwt.get_jwt_browser()
+        use header <- result.try(
+          request.get_header(req, "user-agent")
+          |> result.replace_error(json.string(webtoken)),
+        )
+        use <- bool.guard(
+          !string.contains(header, "mobile"),
+          Ok(json.string(webtoken)),
+        )
+        jwt.set_jwt_mobile(user.user_id.id)
+        |> jwt.get_jwt_mobile()
+        |> json.string()
+        |> Ok
       }
-    }
+        |> result.unwrap_both(),
+    )
+
+    let message =
+      mt.ClientRouterMessage(mt.CLIENTAuthEvent(
+        userid: user.user_id.id,
+        event_type: mt.SIGNIN,
+        success: True,
+        lntl_time: functions.get_timestamp(),
+      ))
+
+    cache_user.cache_user(ctx.user_cache, user)
+    actor.send(ctx.server_monitor, message)
+    t.ADD(user)
+    |> actor.send(ctx.usersupbox, _)
+    list.new()
+    |> list.prepend(token)
+    |> list.prepend(auth)
+    |> list.prepend(userid)
+    |> json.object()
+    |> json.to_string_tree()
+    |> wisp.json_response(200)
+    |> Ok
   }
+  |> result.unwrap_both()
 }
 
 /// This is quite unsafe for now, change this later
 pub fn handle_auth_signout(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
-  case decode.run(json, id_decoder()) {
-    Error(_) -> wisp.response(400)
-    Ok(userid) -> {
-      let message =
-        mt.ClientRouterMessage(mt.CLIENTAuthEvent(
-          userid: userid,
-          event_type: mt.SIGNOUT,
-          success: True,
-          lntl_time: functions.get_timestamp(),
-        ))
-      cache_user.uncache_user(ctx.user_cache, userid)
-      actor.send(ctx.server_monitor, message)
-      t.REM(userid)
-      |> actor.send(ctx.usersupbox, _)
-      wisp.response(200)
-    }
+  let err = wisp.response(400)
+  {
+    use id <- result.try(
+      decode.run(json, id_decoder())
+      |> result.replace_error(err),
+    )
+    let message =
+      mt.ClientRouterMessage(mt.CLIENTAuthEvent(
+        userid: id,
+        event_type: mt.SIGNOUT,
+        success: True,
+        lntl_time: functions.get_timestamp(),
+      ))
+    cache_user.uncache_user(ctx.user_cache, id)
+    actor.send(ctx.server_monitor, message)
+    actor.send(ctx.usersupbox, t.REM(id))
+    wisp.response(200)
+    |> Ok
   }
+  |> result.unwrap_both()
 }
 
 fn is_user(
