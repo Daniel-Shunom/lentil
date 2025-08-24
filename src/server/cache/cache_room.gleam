@@ -17,7 +17,7 @@ type RoomKVStore {
 
 pub fn cache_room(
   cache_subject subj: process.Subject(RoomCacheMessage),
-  room room: rooms.Room
+  room room: rooms.Room,
 ) -> Nil {
   actor.send(subj, CacheRoom(room))
 }
@@ -30,11 +30,11 @@ pub fn start_room_cache() -> process.Subject(RoomCacheMessage) {
 
 fn handler(
   message: RoomCacheMessage,
-  state: RoomKVStore
+  state: RoomKVStore,
 ) -> actor.Next(RoomCacheMessage, RoomKVStore) {
   let CacheRoom(room) = message
   actor.continue(
     dict.insert(state.store, room.room_id.id, room)
-    |> RoomKVStore
+    |> RoomKVStore,
   )
 }

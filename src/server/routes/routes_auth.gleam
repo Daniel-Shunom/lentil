@@ -1,21 +1,21 @@
 import gleam/bool
-import server/jwt/jwt
-import gleam/result
 import gleam/dynamic/decode
-import gleam/string
+import gleam/http/request
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
+import gleam/result
+import gleam/string
 import global/ctx/ctx
 import global/ctx/types as t
 import global/functions.{hasher}
 import models/users/types/users.{type User, User}
 import server/cache/cache_user
+import server/jwt/jwt
 import server/sql
 import utils/msg_types as mt
 import wisp
-import gleam/http/request
 
 pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
@@ -29,25 +29,27 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
           let _day = 60 * 60 * 24
           let userid = #("userid", json.string(valid_user.user_id.id))
           let userauth = #("authenticated", json.bool(valid_user.user_auth))
-          let jwtoken = #("token", {
-
-            /// This is quite unsafe for now, change this later
-            let webtoken = 
-              jwt.set_jwt_browser(valid_user.user_id.id)
-              |> jwt.get_jwt_browser()
-            use header <- result.try(
-              request.get_header(req, "user-agent")
-              |> result.replace_error(json.string(webtoken))
-            )
-            use <- bool.guard(
-              !string.contains(header, "mobile"),
-              Ok(json.string(webtoken)) 
-            )
-            jwt.set_jwt_mobile(valid_user.user_id.id)
-            |> jwt.get_jwt_mobile()
-            |> json.string()
-            |> Ok
-          } |> result.unwrap_both())
+          let jwtoken = #(
+            "token",
+            {
+              let webtoken =
+                jwt.set_jwt_browser(valid_user.user_id.id)
+                |> jwt.get_jwt_browser()
+              use header <- result.try(
+                request.get_header(req, "user-agent")
+                |> result.replace_error(json.string(webtoken)),
+              )
+              use <- bool.guard(
+                !string.contains(header, "mobile"),
+                Ok(json.string(webtoken)),
+              )
+              jwt.set_jwt_mobile(valid_user.user_id.id)
+              |> jwt.get_jwt_mobile()
+              |> json.string()
+              |> Ok
+            }
+              |> result.unwrap_both(),
+          )
           let message =
             mt.ClientRouterMessage(mt.CLIENTAuthEvent(
               userid: valid_user.user_id.id,
@@ -73,6 +75,7 @@ pub fn handle_auth_signin(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
   }
 }
 
+/// This is quite unsafe for now, change this later
 pub fn handle_auth_signout(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)

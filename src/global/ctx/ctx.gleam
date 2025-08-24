@@ -1,4 +1,3 @@
-import server/cache/cache_room.{type RoomCacheMessage}
 import gleam/dict
 import gleam/erlang/process.{type Subject}
 import gleam/list
@@ -12,6 +11,7 @@ import models/messages/types/msg
 import models/rooms/types/rooms
 import models/users/types/users
 import pog
+import server/cache/cache_room.{type RoomCacheMessage}
 import server/cache/cache_user.{type UserCacheMessage}
 import server/sql
 import server/workers/shared/shared_types as sm
@@ -72,7 +72,7 @@ pub fn get_context(
         roomsupbox: roomsup,
         server_monitor: monitor,
         user_cache: user_cache,
-        room_cache: room_cache
+        room_cache: room_cache,
       )
     }
   }

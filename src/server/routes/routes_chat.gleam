@@ -1,13 +1,13 @@
-import gleam/bytes_tree
 import gleam/bool
-import gleam/result
-import gleam/list
+import gleam/bytes_tree
 import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/function
 import gleam/http/response
+import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
+import gleam/result
 import global/ctx/ctx
 import global/ctx/types as t
 import global/functions as gf
@@ -19,36 +19,34 @@ import server/workers/shared/shared_types as sm
 import utils/msg_types as mt
 import wisp
 
-pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) {{
-  let err = 
-    response.new(400)
-    |> response.set_body(
-      "connection not allowed"
-      |> bytes_tree.from_string()
-      |> mist.Bytes()
+pub fn handle_websockets(req, roomid: String, userid: String, ctx: ctx.Context) {
+  {
+    let err =
+      response.new(400)
+      |> response.set_body(
+        "connection not allowed"
+        |> bytes_tree.from_string()
+        |> mist.Bytes(),
+      )
+    use pog.Returned(_, value) <- result.try(
+      sql.fetch_is_valid_message(ctx.db_connection, roomid, userid)
+      |> result.replace_error(err),
     )
-  use pog.Returned(_, value)<- result.try(
-    sql.fetch_is_valid_message(
-      ctx.db_connection,
-      roomid, 
-      userid
+    use extracted <- result.try(
+      list.first(value)
+      |> result.replace_error(err),
     )
-    |> result.replace_error(err)
-  )
-  use extracted <- result.try(
-    list.first(value)
-    |> result.replace_error(err)
-  )
-  use <- bool.guard(!extracted.in_room, Error(err))
-  let handler = fn(state, conn, msg) {
-    ws_handler(state, conn, msg, ctx, roomid)
+    use <- bool.guard(!extracted.in_room, Error(err))
+    let handler = fn(state, conn, msg) {
+      ws_handler(state, conn, msg, ctx, roomid)
+    }
+    mist.websocket(req, handler, on_init(_, userid, roomid, ctx), on_close(
+      _,
+      roomid,
+      ctx,
+    ))
+    |> Ok
   }
-  mist.websocket(
-    req, 
-    handler,
-    on_init(_, userid, roomid, ctx),
-    on_close(_, roomid, ctx) 
-  ) |> Ok }
   |> result.unwrap_both()
 }
 
