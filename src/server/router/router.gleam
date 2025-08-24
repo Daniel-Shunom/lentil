@@ -1,4 +1,3 @@
-import server/routes/routes_edit_room
 import gleam/http
 import global/ctx/ctx
 import server/middleware/middleware.{middleware}
@@ -7,6 +6,7 @@ import server/routes/routes_chat
 import server/routes/routes_create_room
 import server/routes/routes_create_user
 import server/routes/routes_delete_room
+import server/routes/routes_edit_room
 import server/routes/routes_join_room
 import server/routes/routes_leave_room
 import server/routes/routes_profile
