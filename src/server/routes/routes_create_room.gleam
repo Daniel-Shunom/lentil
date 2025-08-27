@@ -17,7 +17,7 @@ import wisp
 pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response {
   use <- wisp.require_content_type(req, "application/json")
   use json <- wisp.require_json(req)
-  let bar = {
+  {
     use RoomReqs(roomid, ownerid, roomname, capacity, status) <- result.try(
       decode.run(json, room_decoder())
       |> result.replace_error(wisp.response(400)),
@@ -60,7 +60,7 @@ pub fn handle_create_room(req: wisp.Request, ctx: ctx.Context) -> wisp.Response 
     |> wisp.json_response(200)
     |> Ok
   }
-  result.unwrap_both(bar)
+  |> result.unwrap_both()
 }
 
 fn room_decoder() -> decode.Decoder(RoomReqs) {

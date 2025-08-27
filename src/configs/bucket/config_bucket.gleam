@@ -1,6 +1,13 @@
-import configs/configs.{type BucketConfig, BucketConfig}
 import gleam/erlang/process.{type Subject}
 import gleam/option.{type Option, None}
+
+pub type BucketConfig(bucket_provider, msg_type) {
+  BucketConfig(
+    provider: fn() -> Nil,
+    channel: Option(Subject(msg_type)),
+    handler: Option(fn(msg_type, Subject(msg_type)) -> Nil),
+  )
+}
 
 pub fn configbucket_new() -> BucketConfig(a, b) {
   BucketConfig(provider: fn() { Nil }, channel: None, handler: None)

@@ -1,6 +1,13 @@
-import configs/configs.{type CacheConfig, CacheConfig}
 import gleam/erlang/process.{type Subject}
 import gleam/option.{type Option, None}
+
+pub type CacheConfig(cache_provider, msg_type) {
+  CacheConfig(
+    provider: fn() -> Nil,
+    channel: Option(Subject(msg_type)),
+    handler: Option(fn(msg_type, Subject(msg_type)) -> Nil),
+  )
+}
 
 pub fn cacheconfig_new() -> CacheConfig(a, b) {
   CacheConfig(provider: fn() { Nil }, channel: None, handler: None)
