@@ -1,6 +1,13 @@
-import configs/configs.{type LogConfig, LogConfig}
 import gleam/erlang/process.{type Subject}
 import gleam/option.{type Option, None}
+
+pub type LogConfig(log_provider, msg_type) {
+  LogConfig(
+    provider: fn() -> Nil,
+    channel: Option(Subject(msg_type)),
+    handler: Option(fn(msg_type, Subject(msg_type)) -> Nil),
+  )
+}
 
 pub fn logconfig_new() -> LogConfig(a, b) {
   LogConfig(provider: fn() { Nil }, channel: None, handler: None)

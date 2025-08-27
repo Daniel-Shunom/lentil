@@ -1,4 +1,12 @@
-import configs/configs.{type DbConfig, DbConfig}
+pub type DbConfig {
+  DbConfig(
+    host: Int,
+    port: Int,
+    poolsize: Int,
+    username: String,
+    password: String,
+  )
+}
 
 pub fn dbconfig_new() -> DbConfig {
   DbConfig(5432, 3000, 10, "", "")
