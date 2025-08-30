@@ -26,6 +26,8 @@ pub fn main() {
       False,
     )
 
+  /// contains serverwide context variables
+  /// to be only created once upon startup.
   let ctx =
     get_context(
       connection,
